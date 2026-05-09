@@ -64,18 +64,6 @@ Do not bake Databricks bearer tokens or temporary cloud credentials into custom
 images. Pass credentials at runtime through your orchestrator's secret
 mechanism.
 
-## Run a One-Off Query
-
-The same image can run `query` mode. Query mode does not need a published port:
-
-```bash
-docker run --rm \
-  -e HARBORSQL_DATABRICKS_HOST="https://<workspace-host>" \
-  -e DATABRICKS_TOKEN="<token>" \
-  ghcr.io/harborsql/harborsql:$TAG \
-  query --sql "SELECT COUNT(*) FROM <catalog>.<schema>.<table>"
-```
-
 ## Docker Compose
 
 ```yaml
