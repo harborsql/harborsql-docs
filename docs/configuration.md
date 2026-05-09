@@ -6,6 +6,35 @@ title: Configuration
 
 HarborSQL reads configuration from environment variables.
 
+## Unity Catalog Permissions
+
+HarborSQL is designed for teams that already have Unity Catalog Delta tables
+and existing Databricks principals that can read those tables.
+
+The HarborSQL-specific grant is `EXTERNAL USE SCHEMA`. Grant it on each schema
+you want to query from HarborSQL:
+
+```sql
+GRANT EXTERNAL USE SCHEMA ON SCHEMA <catalog>.<schema> TO `<principal>`;
+```
+
+This privilege lets Unity Catalog vend temporary table credentials to an
+external engine. It does not replace the normal Unity Catalog read permissions.
+The same principal still needs the permissions it would need to read the table
+through Databricks:
+
+```sql
+GRANT USE CATALOG ON CATALOG <catalog> TO `<principal>`;
+GRANT USE SCHEMA ON SCHEMA <catalog>.<schema> TO `<principal>`;
+GRANT SELECT ON TABLE <catalog>.<schema>.<table> TO `<principal>`;
+```
+
+`SELECT` may also be inherited from a schema or catalog grant. HarborSQL does
+not need static cloud credentials; Unity Catalog vends temporary table
+credentials at query time.
+
+## Environment Variables
+
 | Variable | Required | Default | Description |
 | --- | --- | --- | --- |
 | `HARBORSQL_DATABRICKS_HOST` or `DATABRICKS_HOST` | yes | none | Databricks workspace URL or host; defaults to `https://` when no scheme is supplied and rejects `http://` unless explicitly allowed |
