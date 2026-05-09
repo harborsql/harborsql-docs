@@ -14,7 +14,7 @@ const config: Config = {
   url: 'https://docs.harborsql.com',
   baseUrl: '/',
 
-  organizationName: 'ablanchard',
+  organizationName: 'harborsql',
   projectName: 'harborsql-docs',
 
   onBrokenLinks: 'throw',
@@ -32,7 +32,7 @@ const config: Config = {
           routeBasePath: '/',
           sidebarPath: './sidebars.ts',
           editUrl:
-            'https://github.com/ablanchard/harborsql-docs/tree/main/',
+            'https://github.com/harborsql/harborsql-docs/tree/main/',
         },
         blog: false,
         theme: {
@@ -66,7 +66,7 @@ const config: Config = {
           position: 'right',
         },
         {
-          href: 'https://github.com/ablanchard/harborsql',
+          href: 'https://github.com/harborsql/harborsql',
           label: 'GitHub',
           position: 'right',
         },
@@ -101,11 +101,11 @@ const config: Config = {
             },
             {
               label: 'Source Repository',
-              href: 'https://github.com/ablanchard/harborsql',
+              href: 'https://github.com/harborsql/harborsql',
             },
             {
               label: 'Releases',
-              href: 'https://github.com/ablanchard/harborsql/releases',
+              href: 'https://github.com/harborsql/harborsql/releases',
             },
           ],
         },
