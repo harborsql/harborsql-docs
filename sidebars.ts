@@ -8,12 +8,10 @@ const sidebars: SidebarsConfig = {
     'how-it-works',
     'configuration',
     'result-types',
-    {
-      type: 'category',
-      label: 'Operations',
-      items: ['operations', 'connector-smoke-tests', 'benchmarks', 'releases', 'security'],
-    },
-    'development',
+    'connector-smoke-tests',
+    'benchmarks',
+    'releases',
+    'security',
   ],
 };
 
