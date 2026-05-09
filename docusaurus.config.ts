@@ -109,19 +109,6 @@ const config: Config = {
             },
           ],
         },
-        {
-          title: 'More',
-          items: [
-            {
-              label: 'Benchmarks',
-              to: '/benchmarks',
-            },
-            {
-              label: 'Security',
-              to: '/security',
-            },
-          ],
-        },
       ],
       copyright: `Copyright © ${new Date().getFullYear()} HarborSQL contributors. Built with Docusaurus.`,
     },

@@ -8,10 +8,6 @@ const sidebars: SidebarsConfig = {
     'how-it-works',
     'configuration',
     'result-types',
-    'connector-smoke-tests',
-    'benchmarks',
-    'releases',
-    'security',
   ],
 };
 
