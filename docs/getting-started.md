@@ -61,7 +61,33 @@ cargo run -- query --sql "SELECT COUNT(*) FROM <catalog>.<schema>.<table>"
 HarborSQL targets a focused Databricks SQL connector-compatible
 Thrift-over-HTTP surface.
 
-For local development, point the connector at HarborSQL and disable Cloud Fetch:
+### HarborSQL Behind HTTPS
+
+When HarborSQL is exposed through HTTPS, for example behind a TLS-terminating
+proxy, keep the existing Databricks SQL connector shape and change only
+`server_hostname` to the HarborSQL host:
+
+```python
+from databricks import sql
+import os
+
+connection = sql.connect(
+    server_hostname="sql.example.com",
+    http_path="/sql/1.0/warehouses/<warehouse-id>",
+    access_token=os.environ["DATABRICKS_TOKEN"],
+    catalog="workspace",
+    schema="analytics",
+)
+
+with connection.cursor() as cursor:
+    cursor.execute("SELECT count(*) FROM events")
+    print(cursor.fetchone())
+```
+
+### Local or Plain HTTP HarborSQL
+
+For a local or plain HTTP HarborSQL endpoint, override the connector's internal
+connection URI with the full `http://` URL:
 
 ```python
 from databricks import sql
@@ -76,7 +102,6 @@ connection = sql.connect(
     catalog="workspace",
     schema="analytics",
     _connection_uri=uri,
-    use_cloud_fetch=False,
 )
 
 with connection.cursor() as cursor:
