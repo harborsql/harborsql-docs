@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-labelledby="title desc">
+  <title id="title">HarborSQL logo</title>
+  <desc id="desc">A stylized letter H built from rounded data dots.</desc>
+  <defs>
+    <linearGradient id="harborsql-dot-h" x1="22" y1="20" x2="78" y2="80" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#087865"/>
+      <stop offset="0.58" stop-color="#075446"/>
+      <stop offset="1" stop-color="#d95c42"/>
+    </linearGradient>
+  </defs>
+  <g fill="url(#harborsql-dot-h)">
+    <circle cx="28" cy="22" r="6.4"/>
+    <circle cx="28" cy="36" r="6.4"/>
+    <circle cx="28" cy="50" r="6.4"/>
+    <circle cx="28" cy="64" r="6.4"/>
+    <circle cx="28" cy="78" r="6.4"/>
+    <circle cx="72" cy="22" r="6.4"/>
+    <circle cx="72" cy="36" r="6.4"/>
+    <circle cx="72" cy="50" r="6.4"/>
+    <circle cx="72" cy="64" r="6.4"/>
+    <circle cx="72" cy="78" r="6.4"/>
+    <circle cx="42.7" cy="50" r="5.9"/>
+    <circle cx="57.3" cy="50" r="5.9"/>
+  </g>
+</svg>
