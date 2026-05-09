@@ -7,6 +7,7 @@ const sidebars: SidebarsConfig = {
     'docker',
     'how-it-works',
     'configuration',
+    'advanced-usage',
     'result-types',
   ],
 };

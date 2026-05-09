@@ -43,7 +43,7 @@ docker run --rm \
 Add `HARBORSQL_DEFAULT_CATALOG`, `HARBORSQL_DEFAULT_SCHEMA`, or
 `HARBORSQL_AWS_REGION` only when the defaults do not match your workspace.
 
-See [Docker](./docker) for image tags, one-off queries, Compose, and production notes.
+See [Docker](./docker) for image tags, Compose, and production notes.
 
 ## Run the Server
 
@@ -60,15 +60,6 @@ The server listens on `127.0.0.1:1992` by default.
 Production deployments should serve HarborSQL over HTTPS, or behind a
 TLS-terminating proxy. The HarborSQL-to-Databricks and Unity Catalog hop must
 use HTTPS for real Databricks workspaces.
-
-## Run a One-Off Query
-
-```bash
-export HARBORSQL_DATABRICKS_HOST="https://<workspace-host>"
-export DATABRICKS_TOKEN="<token>"
-
-cargo run -- query --sql "SELECT COUNT(*) FROM <catalog>.<schema>.<table>"
-```
 
 ## Connect a Databricks SQL Client
 
