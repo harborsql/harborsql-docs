@@ -4,6 +4,7 @@ const sidebars: SidebarsConfig = {
   docsSidebar: [
     'intro',
     'getting-started',
+    'docker',
     'how-it-works',
     'configuration',
     'result-types',

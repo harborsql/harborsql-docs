@@ -6,18 +6,37 @@ title: Getting Started
 
 ## Requirements
 
-- Rust `1.91+`
+- Docker, for the published container image
+- Rust `1.91+`, for running from source
 - Access to a Databricks workspace with Unity Catalog enabled
 - A Unity Catalog Delta table that can vend temporary table credentials to external clients
 - Object storage access mediated through Unity Catalog temporary table credentials
 
+## Run with Docker
+
+Use the published image when you do not need to build HarborSQL from source:
+
+```bash
+export TAG="<version>"
+
+docker run --rm \
+  -p 127.0.0.1:1992:1992 \
+  -e HARBORSQL_BIND_ADDR="0.0.0.0:1992" \
+  -e HARBORSQL_DATABRICKS_HOST="https://<workspace-host>" \
+  ghcr.io/harborsql/harborsql:$TAG
+```
+
+Add `HARBORSQL_DEFAULT_CATALOG`, `HARBORSQL_DEFAULT_SCHEMA`, or
+`HARBORSQL_AWS_REGION` only when the defaults do not match your workspace.
+
+See [Docker](./docker) for image tags, one-off queries, Compose, and production notes.
+
 ## Run the Server
+
+Use Cargo when developing HarborSQL from source:
 
 ```bash
 export HARBORSQL_DATABRICKS_HOST="https://<workspace-host>"
-export HARBORSQL_DEFAULT_CATALOG="<catalog>"
-export HARBORSQL_DEFAULT_SCHEMA="<schema>"
-export HARBORSQL_AWS_REGION="<aws-region>"
 
 cargo run -- server
 ```
