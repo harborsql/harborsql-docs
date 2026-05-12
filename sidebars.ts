@@ -9,6 +9,7 @@ const sidebars: SidebarsConfig = {
     'configuration',
     'advanced-usage',
     'result-types',
+    'sql-compatibility',
   ],
 };
 
