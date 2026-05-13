@@ -60,6 +60,7 @@ const config: Config = {
           label: 'Docs',
         },
         {to: '/getting-started', label: 'Getting Started', position: 'left'},
+        {to: '/benchmarks', label: 'Benchmarks', position: 'left'},
         {
           href: 'https://harborsql.com',
           label: 'Website',
