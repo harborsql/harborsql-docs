@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HarborSQL Benchmark Dashboard</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --text: #172033;
+      --muted: #667085;
+      --line: #d8dee9;
+      --line-strong: #c6ceda;
+      --header: #eef2f6;
+      --accent: #1d4ed8;
+      --accent-soft: #dbeafe;
+      --best-bg: #dcfce7;
+      --best-text: #166534;
+      --worst-bg: #fee2e2;
+      --worst-text: #991b1b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.45;
+    }
+    main { max-width: 1360px; margin: 0 auto; padding: 32px 24px 56px; }
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 20px;
+      align-items: end;
+      margin-bottom: 24px;
+    }
+    h1 { margin: 0 0 8px; font-size: 34px; line-height: 1.1; letter-spacing: 0; }
+    h2 { margin: 0; font-size: 23px; letter-spacing: 0; }
+    h3 { margin: 0; font-size: 16px; letter-spacing: 0; }
+    p { margin: 0 0 12px; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .lede { max-width: 850px; color: var(--muted); }
+    .execution-note {
+      max-width: 960px;
+      margin-top: 10px;
+      color: #344054;
+      background: #eef6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 14px;
+    }
+    .version-control {
+      display: grid;
+      gap: 6px;
+      min-width: 260px;
+    }
+    .version-control span {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+    select {
+      min-height: 38px;
+      border: 1px solid var(--line-strong);
+      border-radius: 6px;
+      background: var(--panel);
+      color: var(--text);
+      font: inherit;
+      padding: 6px 36px 6px 10px;
+    }
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .stat {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--panel);
+      padding: 5px 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .stat strong { color: var(--text); }
+    .dataset-section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      margin-top: 18px;
+    }
+    .dataset-heading {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    .dataset-heading span {
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    .dataset-description {
+      max-width: 980px;
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .table-wrap {
+      overflow-x: auto;
+    }
+    .dataset-table-wrap {
+      margin-top: 14px;
+    }
+    .detail-panel {
+      margin-top: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfe;
+    }
+    .detail-panel > summary {
+      cursor: pointer;
+      padding: 10px 12px;
+      color: #344054;
+      font-weight: 650;
+    }
+    .detail-panel[open] > summary {
+      border-bottom: 1px solid var(--line);
+    }
+    .detail-table-wrap {
+      padding: 0 12px 12px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      color: #344054;
+      background: var(--header);
+      font-weight: 650;
+      white-space: nowrap;
+    }
+    td {
+      min-width: 76px;
+    }
+    td:nth-child(1) {
+      min-width: 105px;
+    }
+    td:nth-child(2),
+    td:nth-child(3) {
+      min-width: 105px;
+    }
+    td:last-child {
+      min-width: 260px;
+    }
+    .query-cell {
+      display: grid;
+      gap: 3px;
+      min-width: 280px;
+      max-width: 520px;
+    }
+    .query-label {
+      font-weight: 700;
+      color: var(--text);
+    }
+    .query-summary {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .query-matrix-table th:not(:first-child),
+    .query-matrix-table td:not(:first-child) {
+      min-width: 138px;
+      text-align: right;
+    }
+    .query-matrix-table td:last-child {
+      min-width: 138px;
+    }
+    .query-matrix-table td.perf-best {
+      background: var(--best-bg);
+      color: var(--best-text);
+      font-weight: 700;
+    }
+    .query-matrix-table td.perf-worst {
+      background: var(--worst-bg);
+      color: var(--worst-text);
+      font-weight: 700;
+    }
+    .perf-time-value {
+      white-space: nowrap;
+    }
+    .perf-time-value + .perf-time-value {
+      margin-left: 8px;
+    }
+    .comparison-badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 12px;
+      font-weight: 650;
+      white-space: nowrap;
+    }
+    .comparison-badge.databricks {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .comparison-badge.latest {
+      background: var(--accent-soft);
+      color: #174ea6;
+    }
+    .comparison-badge.selected {
+      background: #d1fae5;
+      color: #047857;
+    }
+    .placeholder-row td {
+      color: var(--muted);
+    }
+    .empty {
+      color: var(--muted);
+      font-style: italic;
+      margin: 0;
+    }
+    [hidden] { display: none !important; }
+    footer {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 24px;
+    }
+    @media (max-width: 860px) {
+      main { padding: 24px 14px 40px; }
+      header { grid-template-columns: 1fr; align-items: start; }
+      h1 { font-size: 28px; }
+      .version-control { min-width: 0; }
+      .dataset-heading { align-items: flex-start; flex-direction: column; gap: 4px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>HarborSQL Benchmark Dashboard</h1>
+        <p class="lede">Dataset-first comparison of Databricks SQL Warehouse baselines, the latest HarborSQL result for each dataset, and a selected HarborSQL version.</p>
+        <p class="execution-note">Benchmarks are run from compute in the same cloud region as the dataset being read. Results keep only the wall-clock time observed by the benchmark client. Cost columns use server or warehouse compute only from the benchmark pricing assumptions; benchmark client EC2 cost is excluded.</p>
+        <div class="stats">
+          <span class="stat"><strong>4</strong> datasets</span>
+          <span class="stat"><strong>6</strong> HarborSQL versions</span>
+          <span class="stat"><strong>4</strong> Databricks rows</span>
+          <span class="stat"><strong>13</strong> HarborSQL rows</span>
+        </div>
+      </div>
+      <label class="version-control">
+        <span>Compare HarborSQL version</span>
+        <select id="harborsql-version-select">
+          <option value="v0.1.3" selected>v0.1.3</option>
+          <option value="v0.1.2">v0.1.2</option>
+          <option value="v0.1.2-rc.1">v0.1.2-rc.1</option>
+          <option value="v0.1.0">v0.1.0</option>
+          <option value="v0.1.0-rc.5">v0.1.0-rc.5</option>
+          <option value="v0.1.0-rc.4">v0.1.0-rc.4</option>
+        </select>
+      </label>
+    </header>
+
+    <section class="dataset-section" id="dataset-clickbench">
+      <div class="dataset-heading">
+        <h2>ClickBench</h2>
+        <span>clickbench · latest HarborSQL v0.1.3</span>
+      </div>
+      <p class="dataset-description">Analytical workload over the optimized S3-backed ClickBench hits table. The runner executes the 43 ClickBench queries multiple times and reports the aggregate best, median, and average query timings.</p>
+      <div class="table-wrap dataset-table-wrap">
+        <table><thead><tr><th>Comparison</th><th>Instance size</th><th>Version</th><th>$/hr</th><th>Queries</th><th>Runs/query</th><th>Failed</th><th>Best total</th><th>Best cost</th><th>Median total</th><th>Median cost</th><th>Average total</th><th>Average cost</th><th>Result</th></tr></thead><tbody><tr><td><span class="comparison-badge databricks">Databricks</span></td><td>2xs</td><td>v2026.10</td><td>$3.60</td><td>43</td><td>3</td><td>0</td><td>170.3s</td><td>$0.1703</td><td>192.1s</td><td>$0.1921</td><td>218.0s</td><td>$0.2180</td><td><a href="../results/databricks-sql-warehouse/2xs/v2026.10/clickbench/databricks-2xs-aws-ec2-t3.small-clickbench-20260510T152626Z.json">results/databricks-sql-warehouse/2xs/v2026.10/clickbench/databricks-2xs-aws-ec2-t3.small-clickbench-20260510T152626Z.json</a></td></tr>
+<tr><td><span class="comparison-badge latest">Latest</span></td><td>i3.2xlarge</td><td>v0.1.3</td><td>$0.7240</td><td>43</td><td>3</td><td>0</td><td>119.3s</td><td>$0.0240</td><td>121.6s</td><td>$0.0245</td><td>122.1s</td><td>$0.0246</td><td><a href="../results/harborsql/i3.2xlarge/v0.1.3/clickbench/optimized.json">results/harborsql/i3.2xlarge/v0.1.3/clickbench/optimized.json</a></td></tr>
+<tr class="selected-data-row" data-selected-version="v0.1.0-rc.4" hidden><td><span class="comparison-badge selected">Selected</span></td><td>i3.2xlarge</td><td>v0.1.0-rc.4</td><td>$0.7240</td><td>43</td><td>3</td><td>0</td><td>201.6s</td><td>$0.0405</td><td>212.2s</td><td>$0.0427</td><td>216.9s</td><td>$0.0436</td><td><a href="../results/harborsql/i3.2xlarge/v0.1.0-rc.4/clickbench/optimized.json">results/harborsql/i3.2xlarge/v0.1.0-rc.4/clickbench/optimized.json</a></td></tr>
+<tr class="selected-data-row" data-selected-version="v0.1.0" hidden><td><span class="comparison-badge selected">Selected</span></td><td>i3.2xlarge</td><td>v0.1.0</td><td>$0.7240</td><td>43</td><td>3</td><td>3</td><td>194.3s</td><td>$0.0391</td><td>197.2s</td><td>$0.0397</td><td>198.4s</td><td>$0.0399</td><td><a href="../results/harborsql/i3.2xlarge/v0.1.0/clickbench/optimized.json">results/harborsql/i3.2xlarge/v0.1.0/clickbench/optimized.json</a></td></tr>
+<tr class="selected-data-row" data-selected-version="v0.1.2-rc.1" hidden><td><span class="comparison-badge selected">Selected</span></td><td>i3.2xlarge</td><td>v0.1.2-rc.1</td><td>$0.7240</td><td>43</td><td>3</td><td>0</td><td>113.6s</td><td>$0.0228</td><td>116.5s</td><td>$0.0234</td><td>118.2s</td><td>$0.0238</td><td><a href="../results/harborsql/i3.2xlarge/v0.1.2-rc.1/clickbench/optimized.json">results/harborsql/i3.2xlarge/v0.1.2-rc.1/clickbench/optimized.json</a></td></tr>
+<tr class="selected-data-row" data-selected-version="v0.1.2" hidden><td><span class="comparison-badge selected">Selected</span></td><td>i3.2xlarge</td><td>v0.1.2</td><td>$0.7240</td><td>43</td><td>3</td><td>0</td><td>121.6s</td><td>$0.0245</td><td>123.4s</td><td>$0.0248</td><td>124.1s</td><td>$0.0250</td><td><a href="../results/harborsql/i3.2xlarge/v0.1.2/clickbench/optimized.json">results/harborsql/i3.2xlarge/v0.1.2/clickbench/optimized.json</a></td></tr>
+<tr class="selected-data-row" data-selected-version="v0.1.3"><td><span class="comparison-badge selected">Selected</span></td><td>i3.2xlarge</td><td>v0.1.3</td><td>$0.7240</td><td>43</td><td>3</td><td>0</td><td>119.3s</td><td>$0.0240</td><td>121.6s</td><td>$0.0245</td><td>122.1s</td><td>$0.0246</td><td><a href="../results/harborsql/i3.2xlarge/v0.1.3/clickbench/optimized.json">results/harborsql/i3.2xlarge/v0.1.3/clickbench/optimized.json</a></td></tr>
+<tr hidden class="placeholder-row selected-empty-row"><td><span class="comparison-badge selected">Selected</span></td><td></td><td><span class="selected-version-label">v0.1.3</span></td><td><span class="empty">No HarborSQL results for the selected version.</span></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></tbody></table>
+      </div>
+      <details class="detail-panel">
+        <summary>Per-query detail</summary>
+        <div class="table-wrap detail-table-wrap">
+          <table class="query-matrix-table"><thead><tr><th>Query</th><th>Databricks / 2xs</th><th>Latest HarborSQL / i3.2xlarge</th><th>Selected HarborSQL / i3.2xlarge</th></tr></thead><tbody><tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q0</span><span class="query-summary">SELECT COUNT(*) FROM hits</span></div></td><td><span class="perf-time-value" data-seconds="2.678000">2.678s</span></td><td><span class="perf-time-value" data-seconds="0.015000">0.015s</span></td><td><span data-seconds="0.234000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">0.234s</span><span data-seconds="0.227000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">0.227s</span><span data-seconds="0.010000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">0.010s</span><span data-seconds="0.017000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">0.017s</span><span data-seconds="0.015000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">0.015s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q1</span><span class="query-summary">SELECT COUNT(*) FROM hits WHERE AdvEngineID &lt;&gt; 0</span></div></td><td><span class="perf-time-value" data-seconds="1.052000">1.052s</span></td><td><span class="perf-time-value" data-seconds="1.117000">1.117s</span></td><td><span data-seconds="3.255000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">3.255s</span><span data-seconds="1.124000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">1.124s</span><span data-seconds="0.754000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">0.754s</span><span data-seconds="1.105000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">1.105s</span><span data-seconds="1.117000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">1.117s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q2</span><span class="query-summary">SELECT SUM(AdvEngineID), COUNT(*), AVG(ResolutionWidth) FROM hits</span></div></td><td><span class="perf-time-value" data-seconds="1.022000">1.022s</span></td><td><span class="perf-time-value" data-seconds="1.019000">1.019s</span></td><td><span data-seconds="2.330000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">2.330s</span><span data-seconds="1.152000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">1.152s</span><span data-seconds="0.869000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">0.869s</span><span data-seconds="1.048000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">1.048s</span><span data-seconds="1.019000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">1.019s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q3</span><span class="query-summary">SELECT AVG(UserID) FROM hits</span></div></td><td><span class="perf-time-value" data-seconds="0.854000">0.854s</span></td><td><span class="perf-time-value" data-seconds="1.096000">1.096s</span></td><td><span data-seconds="3.363000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">3.363s</span><span data-seconds="1.219000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">1.219s</span><span data-seconds="0.815000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">0.815s</span><span data-seconds="1.068000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">1.068s</span><span data-seconds="1.096000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">1.096s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q4</span><span class="query-summary">SELECT COUNT(DISTINCT UserID) FROM hits</span></div></td><td><span class="perf-time-value" data-seconds="3.306000">3.306s</span></td><td><span class="perf-time-value" data-seconds="1.745000">1.745s</span></td><td><span data-seconds="3.545000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">3.545s</span><span data-seconds="3.225000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">3.225s</span><span data-seconds="1.839000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">1.839s</span><span data-seconds="1.855000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">1.855s</span><span data-seconds="1.745000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">1.745s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q5</span><span class="query-summary">SELECT COUNT(DISTINCT SearchPhrase) FROM hits</span></div></td><td><span class="perf-time-value" data-seconds="3.948000">3.948s</span></td><td><span class="perf-time-value" data-seconds="1.724000">1.724s</span></td><td><span data-seconds="3.967000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">3.967s</span><span data-seconds="3.060000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">3.060s</span><span data-seconds="1.738000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">1.738s</span><span data-seconds="1.774000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">1.774s</span><span data-seconds="1.724000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">1.724s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q6</span><span class="query-summary">SELECT MIN(EventDate), MAX(EventDate) FROM hits</span></div></td><td><span class="perf-time-value" data-seconds="0.720000">0.720s</span></td><td><span class="perf-time-value" data-seconds="0.055000">0.055s</span></td><td><span data-seconds="0.209000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">0.209s</span><span data-seconds="0.245000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">0.245s</span><span data-seconds="0.030000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">0.030s</span><span data-seconds="0.038000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">0.038s</span><span data-seconds="0.055000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">0.055s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q7</span><span class="query-summary">SELECT AdvEngineID, COUNT(*) FROM hits WHERE AdvEngineID &lt;&gt; 0 GROUP BY AdvEngineID ORDER BY COUNT(*) DESC</span></div></td><td><span class="perf-time-value" data-seconds="0.814000">0.814s</span></td><td><span class="perf-time-value" data-seconds="1.001000">1.001s</span></td><td><span data-seconds="2.484000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">2.484s</span><span data-seconds="1.022000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">1.022s</span><span data-seconds="0.800000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">0.800s</span><span data-seconds="1.117000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">1.117s</span><span data-seconds="1.001000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">1.001s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q8</span><span class="query-summary">SELECT RegionID, COUNT(DISTINCT UserID) AS u FROM hits GROUP BY RegionID ORDER BY u DESC LIMIT 10</span></div></td><td><span class="perf-time-value" data-seconds="3.659000">3.659s</span></td><td><span class="perf-time-value" data-seconds="2.213000">2.213s</span></td><td><span data-seconds="4.800000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">4.800s</span><span data-seconds="3.958000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">3.958s</span><span data-seconds="2.208000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">2.208s</span><span data-seconds="2.251000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">2.251s</span><span data-seconds="2.213000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">2.213s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q9</span><span class="query-summary">SELECT RegionID, SUM(AdvEngineID), COUNT(*) AS c, AVG(ResolutionWidth), COUNT(DISTINCT UserID) FROM hits GROUP BY Reg...</span></div></td><td><span class="perf-time-value" data-seconds="5.807000">5.807s</span></td><td><span class="perf-time-value" data-seconds="2.430000">2.430s</span></td><td><span data-seconds="4.792000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">4.792s</span><span data-seconds="4.598000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">4.598s</span><span data-seconds="2.552000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">2.552s</span><span data-seconds="2.571000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">2.571s</span><span data-seconds="2.430000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">2.430s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q10</span><span class="query-summary">SELECT MobilePhoneModel, COUNT(DISTINCT UserID) AS u FROM hits WHERE MobilePhoneModel &lt;&gt; &#x27;&#x27; GROUP BY MobilePhoneModel...</span></div></td><td><span class="perf-time-value" data-seconds="1.711000">1.711s</span></td><td><span class="perf-time-value" data-seconds="1.359000">1.359s</span></td><td><span data-seconds="4.215000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">4.215s</span><span data-seconds="1.712000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">1.712s</span><span data-seconds="1.465000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">1.465s</span><span data-seconds="1.366000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">1.366s</span><span data-seconds="1.359000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">1.359s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q11</span><span class="query-summary">SELECT MobilePhone, MobilePhoneModel, COUNT(DISTINCT UserID) AS u FROM hits WHERE MobilePhoneModel &lt;&gt; &#x27;&#x27; GROUP BY Mob...</span></div></td><td><span class="perf-time-value" data-seconds="5.335000">5.335s</span></td><td><span class="perf-time-value" data-seconds="1.456000">1.456s</span></td><td><span data-seconds="3.847000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">3.847s</span><span data-seconds="1.841000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">1.841s</span><span data-seconds="1.269000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">1.269s</span><span data-seconds="1.439000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">1.439s</span><span data-seconds="1.456000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">1.456s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q12</span><span class="query-summary">SELECT SearchPhrase, COUNT(*) AS c FROM hits WHERE SearchPhrase &lt;&gt; &#x27;&#x27; GROUP BY SearchPhrase ORDER BY c DESC LIMIT 10</span></div></td><td><span class="perf-time-value" data-seconds="3.650000">3.650s</span></td><td><span class="perf-time-value" data-seconds="1.916000">1.916s</span></td><td><span data-seconds="3.192000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">3.192s</span><span data-seconds="3.094000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">3.094s</span><span data-seconds="1.754000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">1.754s</span><span data-seconds="1.936000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">1.936s</span><span data-seconds="1.916000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">1.916s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q13</span><span class="query-summary">SELECT SearchPhrase, COUNT(DISTINCT UserID) AS u FROM hits WHERE SearchPhrase &lt;&gt; &#x27;&#x27; GROUP BY SearchPhrase ORDER BY u...</span></div></td><td><span class="perf-time-value" data-seconds="4.844000">4.844s</span></td><td><span class="perf-time-value" data-seconds="2.674000">2.674s</span></td><td><span data-seconds="4.747000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">4.747s</span><span data-seconds="4.316000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">4.316s</span><span data-seconds="2.518000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">2.518s</span><span data-seconds="2.758000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">2.758s</span><span data-seconds="2.674000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">2.674s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q14</span><span class="query-summary">SELECT SearchEngineID, SearchPhrase, COUNT(*) AS c FROM hits WHERE SearchPhrase &lt;&gt; &#x27;&#x27; GROUP BY SearchEngineID, Search...</span></div></td><td><span class="perf-time-value" data-seconds="2.582000">2.582s</span></td><td><span class="perf-time-value" data-seconds="1.956000">1.956s</span></td><td><span data-seconds="4.445000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">4.445s</span><span data-seconds="2.996000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">2.996s</span><span data-seconds="1.810000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">1.810s</span><span data-seconds="2.068000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">2.068s</span><span data-seconds="1.956000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">1.956s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q15</span><span class="query-summary">SELECT UserID, COUNT(*) FROM hits GROUP BY UserID ORDER BY COUNT(*) DESC LIMIT 10</span></div></td><td><span class="perf-time-value" data-seconds="2.679000">2.679s</span></td><td><span class="perf-time-value" data-seconds="1.967000">1.967s</span></td><td><span data-seconds="3.534000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">3.534s</span><span data-seconds="3.535000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">3.535s</span><span data-seconds="2.021000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">2.021s</span><span data-seconds="2.050000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">2.050s</span><span data-seconds="1.967000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">1.967s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q16</span><span class="query-summary">SELECT UserID, SearchPhrase, COUNT(*) FROM hits GROUP BY UserID, SearchPhrase ORDER BY COUNT(*) DESC LIMIT 10</span></div></td><td><span class="perf-time-value" data-seconds="5.432000">5.432s</span></td><td><span class="perf-time-value" data-seconds="3.588000">3.588s</span></td><td><span data-seconds="5.111000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">5.111s</span><span data-seconds="6.522000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">6.522s</span><span data-seconds="3.896000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">3.896s</span><span data-seconds="3.772000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">3.772s</span><span data-seconds="3.588000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">3.588s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q17</span><span class="query-summary">SELECT UserID, SearchPhrase, COUNT(*) FROM hits GROUP BY UserID, SearchPhrase LIMIT 10</span></div></td><td><span class="perf-time-value" data-seconds="4.449000">4.449s</span></td><td><span class="perf-time-value" data-seconds="3.554000">3.554s</span></td><td><span data-seconds="5.111000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">5.111s</span><span data-seconds="6.510000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">6.510s</span><span data-seconds="3.801000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">3.801s</span><span data-seconds="3.749000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">3.749s</span><span data-seconds="3.554000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">3.554s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q18</span><span class="query-summary">SELECT UserID, extract(minute FROM EventTime) AS m, SearchPhrase, COUNT(*) FROM hits GROUP BY UserID, m, SearchPhrase...</span></div></td><td><span class="perf-time-value" data-seconds="9.806000">9.806s</span></td><td><span class="perf-time-value" data-seconds="6.745000">6.745s</span></td><td><span data-seconds="9.061000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">9.061s</span><span data-seconds="11.583000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">11.583s</span><span data-seconds="6.936000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">6.936s</span><span data-seconds="6.741000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">6.741s</span><span data-seconds="6.745000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">6.745s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q19</span><span class="query-summary">SELECT UserID FROM hits WHERE UserID = 435090932899640449</span></div></td><td><span class="perf-time-value" data-seconds="0.484000">0.484s</span></td><td><span class="perf-time-value" data-seconds="0.543000">0.543s</span></td><td><span data-seconds="1.402000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">1.402s</span><span data-seconds="0.709000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">0.709s</span><span data-seconds="0.455000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">0.455s</span><span data-seconds="0.576000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">0.576s</span><span data-seconds="0.543000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">0.543s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q20</span><span class="query-summary">SELECT COUNT(*) FROM hits WHERE URL LIKE &#x27;%google%&#x27;</span></div></td><td><span class="perf-time-value" data-seconds="3.134000">3.134s</span></td><td><span class="perf-time-value" data-seconds="3.558000">3.558s</span></td><td><span data-seconds="7.122000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">7.122s</span><span data-seconds="6.147000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">6.147s</span><span data-seconds="3.397000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">3.397s</span><span data-seconds="3.542000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">3.542s</span><span data-seconds="3.558000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">3.558s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q21</span><span class="query-summary">SELECT SearchPhrase, MIN(URL), COUNT(*) AS c FROM hits WHERE URL LIKE &#x27;%google%&#x27; AND SearchPhrase &lt;&gt; &#x27;&#x27; GROUP BY Sear...</span></div></td><td><span class="perf-time-value" data-seconds="3.277000">3.277s</span></td><td><span class="perf-time-value" data-seconds="4.205000">4.205s</span></td><td><span data-seconds="8.387000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">8.387s</span><span data-seconds="6.745000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">6.745s</span><span data-seconds="3.939000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">3.939s</span><span data-seconds="4.246000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">4.246s</span><span data-seconds="4.205000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">4.205s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q22</span><span class="query-summary">SELECT SearchPhrase, MIN(URL), MIN(Title), COUNT(*) AS c, COUNT(DISTINCT UserID) FROM hits WHERE Title LIKE &#x27;%Google%...</span></div></td><td><span class="perf-time-value" data-seconds="5.085000">5.085s</span></td><td><span class="perf-time-value" data-seconds="8.969000">8.969s</span></td><td><span data-seconds="15.865000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">15.865s</span><span data-seconds="13.210000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">13.210s</span><span data-seconds="8.378000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">8.378s</span><span data-seconds="9.016000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">9.016s</span><span data-seconds="8.969000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">8.969s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q23</span><span class="query-summary">SELECT * FROM hits WHERE URL LIKE &#x27;%google%&#x27; ORDER BY EventTime LIMIT 10</span></div></td><td><span class="perf-time-value" data-seconds="10.336000">10.336s</span></td><td><span class="perf-time-value" data-seconds="4.657000">4.657s</span></td><td><span data-seconds="5.033000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">5.033s</span><span data-seconds="5.750000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">5.750s</span><span data-seconds="3.352000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">3.352s</span><span data-seconds="4.651000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">4.651s</span><span data-seconds="4.657000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">4.657s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q24</span><span class="query-summary">SELECT SearchPhrase FROM hits WHERE SearchPhrase &lt;&gt; &#x27;&#x27; ORDER BY EventTime LIMIT 10</span></div></td><td><span class="perf-time-value" data-seconds="1.274000">1.274s</span></td><td><span class="perf-time-value" data-seconds="1.922000">1.922s</span></td><td><span data-seconds="4.159000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">4.159s</span><span data-seconds="2.928000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">2.928s</span><span data-seconds="1.682000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">1.682s</span><span data-seconds="1.963000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">1.963s</span><span data-seconds="1.922000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">1.922s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q25</span><span class="query-summary">SELECT SearchPhrase FROM hits WHERE SearchPhrase &lt;&gt; &#x27;&#x27; ORDER BY SearchPhrase LIMIT 10</span></div></td><td><span class="perf-time-value" data-seconds="0.905000">0.905s</span></td><td><span class="perf-time-value" data-seconds="1.377000">1.377s</span></td><td><span data-seconds="2.540000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">2.540s</span><span data-seconds="1.953000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">1.953s</span><span data-seconds="1.119000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">1.119s</span><span data-seconds="1.363000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">1.363s</span><span data-seconds="1.377000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">1.377s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q26</span><span class="query-summary">SELECT SearchPhrase FROM hits WHERE SearchPhrase &lt;&gt; &#x27;&#x27; ORDER BY EventTime, SearchPhrase LIMIT 10</span></div></td><td><span class="perf-time-value" data-seconds="1.245000">1.245s</span></td><td><span class="perf-time-value" data-seconds="2.220000">2.220s</span></td><td><span data-seconds="4.569000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">4.569s</span><span data-seconds="3.436000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">3.436s</span><span data-seconds="1.997000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">1.997s</span><span data-seconds="2.339000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">2.339s</span><span data-seconds="2.220000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">2.220s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q27</span><span class="query-summary">SELECT CounterID, AVG(length(URL)) AS l, COUNT(*) AS c FROM hits WHERE URL &lt;&gt; &#x27;&#x27; GROUP BY CounterID HAVING COUNT(*) &gt;...</span></div></td><td><span class="perf-time-value" data-seconds="3.006000">3.006s</span></td><td><span class="perf-time-value" data-seconds="4.177000">4.177s</span></td><td><span data-seconds="8.870000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">8.870s</span><span data-seconds="6.643000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">6.643s</span><span data-seconds="3.886000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">3.886s</span><span data-seconds="4.235000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">4.235s</span><span data-seconds="4.177000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">4.177s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q28</span><span class="query-summary">SELECT REGEXP_REPLACE(Referer, &#x27;^https?://(?:www\.)?([^/]+)/.*$&#x27;, &#x27;$1&#x27;) AS k, AVG(length(Referer)) AS l, COUNT(*) AS...</span></div></td><td><span class="perf-time-value" data-seconds="28.257000">28.257s</span></td><td><span class="perf-time-value" data-seconds="20.066000">20.066s</span></td><td><span data-seconds="24.080000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">24.080s</span><span data-seconds="30.029000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">30.029s</span><span data-seconds="19.602000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">19.602s</span><span data-seconds="19.992000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">19.992s</span><span data-seconds="20.066000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">20.066s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q29</span><span class="query-summary">SELECT SUM(ResolutionWidth), SUM(ResolutionWidth + 1), SUM(ResolutionWidth + 2), SUM(ResolutionWidth + 3), SUM(Resolu...</span></div></td><td><span class="perf-time-value" data-seconds="2.863000">2.863s</span></td><td><span class="perf-time-value" data-seconds="1.398000">1.398s</span></td><td><span data-seconds="3.139000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">3.139s</span><span data-seconds="2.507000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">2.507s</span><span data-seconds="1.300000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">1.300s</span><span data-seconds="1.498000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">1.498s</span><span data-seconds="1.398000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">1.398s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q30</span><span class="query-summary">SELECT SearchEngineID, ClientIP, COUNT(*) AS c, SUM(IsRefresh), AVG(ResolutionWidth) FROM hits WHERE SearchPhrase &lt;&gt;...</span></div></td><td><span class="perf-time-value" data-seconds="2.021000">2.021s</span></td><td><span class="perf-time-value" data-seconds="2.223000">2.223s</span></td><td><span data-seconds="5.201000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">5.201s</span><span data-seconds="3.766000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">3.766s</span><span data-seconds="2.081000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">2.081s</span><span data-seconds="2.418000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">2.418s</span><span data-seconds="2.223000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">2.223s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q31</span><span class="query-summary">SELECT WatchID, ClientIP, COUNT(*) AS c, SUM(IsRefresh), AVG(ResolutionWidth) FROM hits WHERE SearchPhrase &lt;&gt; &#x27;&#x27; GROU...</span></div></td><td><span class="perf-time-value" data-seconds="2.137000">2.137s</span></td><td><span class="perf-time-value" data-seconds="2.632000">2.632s</span></td><td><span data-seconds="5.798000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">5.798s</span><span data-seconds="4.638000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">4.638s</span><span data-seconds="2.438000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">2.438s</span><span data-seconds="2.702000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">2.702s</span><span data-seconds="2.632000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">2.632s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q32</span><span class="query-summary">SELECT WatchID, ClientIP, COUNT(*) AS c, SUM(IsRefresh), AVG(ResolutionWidth) FROM hits GROUP BY WatchID, ClientIP OR...</span></div></td><td><span class="perf-time-value" data-seconds="7.063000">7.063s</span></td><td><span class="perf-time-value" data-seconds="5.850000">5.850s</span></td><td><span data-seconds="5.616000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">5.616s</span><span data-seconds="11.022000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">11.022s</span><span data-seconds="5.446000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">5.446s</span><span data-seconds="6.109000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">6.109s</span><span data-seconds="5.850000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">5.850s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q33</span><span class="query-summary">SELECT URL, COUNT(*) AS c FROM hits GROUP BY URL ORDER BY c DESC LIMIT 10</span></div></td><td><span class="perf-time-value" data-seconds="13.947000">13.947s</span></td><td><span class="perf-time-value" data-seconds="6.717000">6.717s</span></td><td><span data-seconds="9.868000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">9.868s</span><span data-seconds="13.532000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">13.532s</span><span data-seconds="6.590000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">6.590s</span><span data-seconds="6.952000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">6.952s</span><span data-seconds="6.717000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">6.717s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q34</span><span class="query-summary">SELECT 1, URL, COUNT(*) AS c FROM hits GROUP BY 1, URL ORDER BY c DESC LIMIT 10</span></div></td><td><span class="perf-time-value" data-seconds="13.878000">13.878s</span></td><td><span class="perf-time-value" data-seconds="6.671000">6.671s</span></td><td><span data-seconds="9.486000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">9.486s</span><span data-seconds="12.074000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">12.074s</span><span data-seconds="6.535000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">6.535s</span><span data-seconds="6.834000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">6.834s</span><span data-seconds="6.671000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">6.671s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q35</span><span class="query-summary">SELECT ClientIP, ClientIP - 1, ClientIP - 2, ClientIP - 3, COUNT(*) AS c FROM hits GROUP BY ClientIP, ClientIP - 1, C...</span></div></td><td><span class="perf-time-value" data-seconds="2.835000">2.835s</span></td><td><span class="perf-time-value" data-seconds="2.267000">2.267s</span></td><td><span data-seconds="3.737000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">3.737s</span><span data-seconds="4.088000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">4.088s</span><span data-seconds="2.242000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">2.242s</span><span data-seconds="2.285000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">2.285s</span><span data-seconds="2.267000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">2.267s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q36</span><span class="query-summary">SELECT URL, COUNT(*) AS PageViews FROM hits WHERE CounterID = 62 AND EventDate &gt;= &#x27;2013-07-01&#x27; AND EventDate &lt;= &#x27;2013...</span></div></td><td><span class="perf-time-value" data-seconds="0.659000">0.659s</span></td><td><span class="perf-time-value" data-seconds="0.291000">0.291s</span></td><td><span data-seconds="0.701000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">0.701s</span><span data-seconds="0.575000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">0.575s</span><span data-seconds="0.283000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">0.283s</span><span data-seconds="0.300000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">0.300s</span><span data-seconds="0.291000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">0.291s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q37</span><span class="query-summary">SELECT Title, COUNT(*) AS PageViews FROM hits WHERE CounterID = 62 AND EventDate &gt;= &#x27;2013-07-01&#x27; AND EventDate &lt;= &#x27;20...</span></div></td><td><span class="perf-time-value" data-seconds="0.595000">0.595s</span></td><td><span class="perf-time-value" data-seconds="0.378000">0.378s</span></td><td><span data-seconds="0.754000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">0.754s</span><span data-seconds="0.621000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">0.621s</span><span data-seconds="0.376000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">0.376s</span><span data-seconds="0.363000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">0.363s</span><span data-seconds="0.378000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">0.378s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q38</span><span class="query-summary">SELECT URL, COUNT(*) AS PageViews FROM hits WHERE CounterID = 62 AND EventDate &gt;= &#x27;2013-07-01&#x27; AND EventDate &lt;= &#x27;2013...</span></div></td><td><span class="perf-time-value" data-seconds="0.559000">0.559s</span></td><td><span class="perf-time-value" data-seconds="0.331000">0.331s</span></td><td><span data-seconds="0.698000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">0.698s</span><span data-seconds="0.562000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">0.562s</span><span data-seconds="0.285000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">0.285s</span><span data-seconds="0.308000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">0.308s</span><span data-seconds="0.331000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">0.331s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q39</span><span class="query-summary">SELECT TraficSourceID, SearchEngineID, AdvEngineID, CASE WHEN (SearchEngineID = 0 AND AdvEngineID = 0) THEN Referer E...</span></div></td><td><span class="perf-time-value" data-seconds="0.897000">0.897s</span></td><td><span class="perf-time-value" data-seconds="0.411000">0.411s</span></td><td><span data-seconds="0.873000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">0.873s</span><span data-seconds="0.402000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">0.402s</span><span data-seconds="0.430000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">0.430s</span><span data-seconds="0.411000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">0.411s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q40</span><span class="query-summary">SELECT URLHash, EventDate, COUNT(*) AS PageViews FROM hits WHERE CounterID = 62 AND EventDate &gt;= &#x27;2013-07-01&#x27; AND Eve...</span></div></td><td><span class="perf-time-value" data-seconds="0.487000">0.487s</span></td><td><span class="perf-time-value" data-seconds="0.289000">0.289s</span></td><td><span data-seconds="0.500000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">0.500s</span><span data-seconds="0.480000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">0.480s</span><span data-seconds="0.228000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">0.228s</span><span data-seconds="0.243000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">0.243s</span><span data-seconds="0.289000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">0.289s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q41</span><span class="query-summary">SELECT WindowClientWidth, WindowClientHeight, COUNT(*) AS PageViews FROM hits WHERE CounterID = 62 AND EventDate &gt;= &#x27;...</span></div></td><td><span class="perf-time-value" data-seconds="0.498000">0.498s</span></td><td><span class="perf-time-value" data-seconds="0.250000">0.250s</span></td><td><span data-seconds="0.449000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">0.449s</span><span data-seconds="0.458000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">0.458s</span><span data-seconds="0.228000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">0.228s</span><span data-seconds="0.257000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">0.257s</span><span data-seconds="0.250000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">0.250s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q42</span><span class="query-summary">SELECT DATE_TRUNC(&#x27;minute&#x27;, EventTime) AS M, COUNT(*) AS PageViews FROM hits WHERE CounterID = 62 AND EventDate &gt;= &#x27;2...</span></div></td><td><span class="perf-time-value" data-seconds="0.497000">0.497s</span></td><td><span class="perf-time-value" data-seconds="0.251000">0.251s</span></td><td><span data-seconds="0.532000" data-selected-version="v0.1.0-rc.4" hidden class="perf-time-value selected-cell-value">0.532s</span><span data-seconds="0.528000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">0.528s</span><span data-seconds="0.230000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">0.230s</span><span data-seconds="0.248000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">0.248s</span><span data-seconds="0.251000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">0.251s</span></td></tr></tbody></table>
+        </div>
+      </details>
+    </section>
+
+    <section class="dataset-section" id="dataset-clickbench-point-lookup">
+      <div class="dataset-heading">
+        <h2>ClickBench point lookup</h2>
+        <span>clickbench-point-lookup · latest HarborSQL v0.1.3</span>
+      </div>
+      <p class="dataset-description">High-concurrency lookup workload over the optimized ClickBench hits table. The runner executes three 10-second phases with increasing target load: 10 RPS, then 20 RPS, then 50 RPS. It issues point-lookups in parallel at each load level using random lookup keys to reduce cache effects. The result reports request count, failure count, average latency, and tail latency percentiles across the run.</p>
+      <div class="table-wrap dataset-table-wrap">
+        <table><thead><tr><th>Comparison</th><th>Instance size</th><th>Version</th><th>$/hr</th><th>Attempted</th><th>Failed</th><th>Wall time</th><th>Run cost</th><th>Avg</th><th>p95</th><th>p99</th><th>Result</th></tr></thead><tbody><tr><td><span class="comparison-badge databricks">Databricks</span></td><td>2xs</td><td>v2026.10</td><td>$3.60</td><td>800</td><td>0</td><td>220.7s</td><td>$0.2207</td><td>17.601s</td><td>38.723s</td><td>41.559s</td><td><a href="../results/databricks-sql-warehouse/2xs/v2026.10/clickbench-point-lookup/databricks-2xs-aws-ec2-t3.small-point-lookup-20260510T152625Z.json">results/databricks-sql-warehouse/2xs/v2026.10/clickbench-point-lookup/databricks-2xs-aws-ec2-t3.small-point-lookup-20260510T152625Z.json</a></td></tr>
+<tr><td><span class="comparison-badge latest">Latest</span></td><td>i3.2xlarge</td><td>v0.1.3</td><td>$0.7240</td><td>800</td><td>3</td><td>267.1s</td><td>$0.0537</td><td>40.384s</td><td>86.628s</td><td>114.1s</td><td><a href="../results/harborsql/i3.2xlarge/v0.1.3/clickbench-point-lookup/point-lookup-concurrency.json">results/harborsql/i3.2xlarge/v0.1.3/clickbench-point-lookup/point-lookup-concurrency.json</a></td></tr>
+<tr class="selected-data-row" data-selected-version="v0.1.0-rc.4" hidden><td><span class="comparison-badge selected">Selected</span></td><td>i3.2xlarge</td><td>v0.1.0-rc.4</td><td>$0.7240</td><td>800</td><td>0</td><td>159.7s</td><td>$0.0321</td><td>1.116s</td><td>3.027s</td><td>7.184s</td><td><a href="../results/harborsql/i3.2xlarge/v0.1.0-rc.4/clickbench-point-lookup/harborsql-ec2-i3.2xlarge-us-west-2-optimized-point-lookup-20260426T160656Z.json">results/harborsql/i3.2xlarge/v0.1.0-rc.4/clickbench-point-lookup/harborsql-ec2-i3.2xlarge-us-west-2-optimized-point-lookup-20260426T160656Z.json</a></td></tr>
+<tr class="selected-data-row" data-selected-version="v0.1.2" hidden><td><span class="comparison-badge selected">Selected</span></td><td>i3.2xlarge</td><td>v0.1.2</td><td>$0.7240</td><td>800</td><td>45</td><td>327.6s</td><td>$0.0659</td><td>62.212s</td><td>129.5s</td><td>172.6s</td><td><a href="../results/harborsql/i3.2xlarge/v0.1.2/clickbench-point-lookup/point-lookup-concurrency.json">results/harborsql/i3.2xlarge/v0.1.2/clickbench-point-lookup/point-lookup-concurrency.json</a></td></tr>
+<tr class="selected-data-row" data-selected-version="v0.1.3"><td><span class="comparison-badge selected">Selected</span></td><td>i3.2xlarge</td><td>v0.1.3</td><td>$0.7240</td><td>800</td><td>3</td><td>267.1s</td><td>$0.0537</td><td>40.384s</td><td>86.628s</td><td>114.1s</td><td><a href="../results/harborsql/i3.2xlarge/v0.1.3/clickbench-point-lookup/point-lookup-concurrency.json">results/harborsql/i3.2xlarge/v0.1.3/clickbench-point-lookup/point-lookup-concurrency.json</a></td></tr>
+<tr hidden class="placeholder-row selected-empty-row"><td><span class="comparison-badge selected">Selected</span></td><td></td><td><span class="selected-version-label">v0.1.3</span></td><td><span class="empty">No HarborSQL results for the selected version.</span></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></tbody></table>
+      </div>
+      <details class="detail-panel">
+        <summary>Point-lookup stage breakdown</summary>
+        <div class="table-wrap detail-table-wrap">
+          <table><thead><tr><th>Stage</th><th>Comparison</th><th>Version</th><th>Target RPS</th><th>Attempted</th><th>Failed</th><th>Drain</th><th>Avg latency</th><th>p95</th><th>p99</th><th>Query delay p95</th><th>Worker delay p95</th></tr></thead><tbody><tr><td>Stage 1</td><td><span class="comparison-badge databricks">Databricks</span></td><td>v2026.10</td><td>10</td><td>100</td><td>0</td><td>41.998s</td><td>18.254s</td><td>26.278s</td><td>26.627s</td><td>46.731s</td><td></td></tr>
+<tr><td>Stage 2</td><td><span class="comparison-badge databricks">Databricks</span></td><td>v2026.10</td><td>20</td><td>200</td><td>0</td><td>22.160s</td><td>9.591s</td><td>21.312s</td><td>22.094s</td><td>1.123s</td><td></td></tr>
+<tr><td>Stage 3</td><td><span class="comparison-badge databricks">Databricks</span></td><td>v2026.10</td><td>50</td><td>500</td><td>0</td><td>58.361s</td><td>20.674s</td><td>40.334s</td><td>41.835s</td><td>22.160s</td><td></td></tr>
+<tr><td>Stage 1</td><td><span class="comparison-badge latest">Latest</span></td><td>v0.1.3</td><td>10</td><td>100</td><td>0</td><td>14.335s</td><td>10.261s</td><td>17.888s</td><td>20.144s</td><td>1.081s</td><td></td></tr>
+<tr><td>Stage 2</td><td><span class="comparison-badge latest">Latest</span></td><td>v0.1.3</td><td>20</td><td>200</td><td>0</td><td>38.741s</td><td>24.791s</td><td>40.274s</td><td>43.793s</td><td>3.701s</td><td></td></tr>
+<tr><td>Stage 3</td><td><span class="comparison-badge latest">Latest</span></td><td>v0.1.3</td><td>50</td><td>500</td><td>3</td><td>116.5s</td><td>52.720s</td><td>95.160s</td><td>119.8s</td><td>63.795s</td><td></td></tr>
+<tr class="selected-data-row" data-selected-version="v0.1.0-rc.4" hidden><td>Stage 1</td><td><span class="comparison-badge selected">Selected</span></td><td>v0.1.0-rc.4</td><td>10</td><td>100</td><td>0</td><td>0.222s</td><td>0.321s</td><td>0.377s</td><td>0.501s</td><td>0.020s</td><td></td></tr>
+<tr class="selected-data-row" data-selected-version="v0.1.0-rc.4" hidden><td>Stage 2</td><td><span class="comparison-badge selected">Selected</span></td><td>v0.1.0-rc.4</td><td>20</td><td>200</td><td>0</td><td>0.250s</td><td>0.328s</td><td>0.379s</td><td>0.478s</td><td>0.015s</td><td></td></tr>
+<tr class="selected-data-row" data-selected-version="v0.1.0-rc.4" hidden><td>Stage 3</td><td><span class="comparison-badge selected">Selected</span></td><td>v0.1.0-rc.4</td><td>50</td><td>500</td><td>0</td><td>9.366s</td><td>1.590s</td><td>4.083s</td><td>7.763s</td><td>3.324s</td><td></td></tr>
+<tr class="selected-data-row" data-selected-version="v0.1.2" hidden><td>Stage 1</td><td><span class="comparison-badge selected">Selected</span></td><td>v0.1.2</td><td>10</td><td>100</td><td>0</td><td>26.450s</td><td>18.347s</td><td>30.438s</td><td>31.669s</td><td>1.387s</td><td></td></tr>
+<tr class="selected-data-row" data-selected-version="v0.1.2" hidden><td>Stage 2</td><td><span class="comparison-badge selected">Selected</span></td><td>v0.1.2</td><td>20</td><td>200</td><td>0</td><td>196.1s</td><td>48.059s</td><td>92.208s</td><td>150.1s</td><td>5.979s</td><td></td></tr>
+<tr class="selected-data-row" data-selected-version="v0.1.2" hidden><td>Stage 3</td><td><span class="comparison-badge selected">Selected</span></td><td>v0.1.2</td><td>50</td><td>500</td><td>45</td><td>177.1s</td><td>78.074s</td><td>138.4s</td><td>176.0s</td><td>107.0s</td><td></td></tr>
+<tr class="selected-data-row" data-selected-version="v0.1.3"><td>Stage 1</td><td><span class="comparison-badge selected">Selected</span></td><td>v0.1.3</td><td>10</td><td>100</td><td>0</td><td>14.335s</td><td>10.261s</td><td>17.888s</td><td>20.144s</td><td>1.081s</td><td></td></tr>
+<tr class="selected-data-row" data-selected-version="v0.1.3"><td>Stage 2</td><td><span class="comparison-badge selected">Selected</span></td><td>v0.1.3</td><td>20</td><td>200</td><td>0</td><td>38.741s</td><td>24.791s</td><td>40.274s</td><td>43.793s</td><td>3.701s</td><td></td></tr>
+<tr class="selected-data-row" data-selected-version="v0.1.3"><td>Stage 3</td><td><span class="comparison-badge selected">Selected</span></td><td>v0.1.3</td><td>50</td><td>500</td><td>3</td><td>116.5s</td><td>52.720s</td><td>95.160s</td><td>119.8s</td><td>63.795s</td><td></td></tr>
+<tr hidden class="placeholder-row selected-empty-row"><td><span class="comparison-badge selected">Selected</span></td><td></td><td><span class="selected-version-label">v0.1.3</span></td><td><span class="empty">No point-lookup stage rows for the selected version.</span></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></tbody></table>
+        </div>
+      </details>
+    </section>
+
+    <section class="dataset-section" id="dataset-delta-types">
+      <div class="dataset-heading">
+        <h2>Delta types</h2>
+        <span>delta-types · latest HarborSQL none</span>
+      </div>
+      <p class="dataset-description">Delta Lake compatibility fixture for type decoding and projection. The core queries read scalar, array, map, and struct columns from delta_type_matrix, including nested field access.</p>
+      <div class="table-wrap dataset-table-wrap">
+        <table><thead><tr><th>Comparison</th><th>Instance size</th><th>Version</th><th>$/hr</th><th>Queries</th><th>Runs/query</th><th>Failed</th><th>Best total</th><th>Best cost</th><th>Median total</th><th>Median cost</th><th>Average total</th><th>Average cost</th><th>Result</th></tr></thead><tbody><tr><td><span class="comparison-badge databricks">Databricks</span></td><td>2xs</td><td>v2026.10</td><td>$3.60</td><td>4</td><td>3</td><td>0</td><td>2.965s</td><td>$0.00297</td><td>3.252s</td><td>$0.00325</td><td>18.739s</td><td>$0.0187</td><td><a href="../results/databricks-sql-warehouse/2xs/v2026.10/delta-types/databricks-2xs-aws-ec2-t3.small-delta-types-20260510T152629Z.json">results/databricks-sql-warehouse/2xs/v2026.10/delta-types/databricks-2xs-aws-ec2-t3.small-delta-types-20260510T152629Z.json</a></td></tr>
+<tr class="placeholder-row"><td><span class="comparison-badge latest">Latest</span></td><td></td><td><span class="empty">No versioned HarborSQL results for Delta types.</span></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr class="placeholder-row selected-empty-row"><td><span class="comparison-badge selected">Selected</span></td><td></td><td><span class="selected-version-label">v0.1.3</span></td><td><span class="empty">No HarborSQL results for the selected version.</span></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></tbody></table>
+      </div>
+    </section>
+
+    <section class="dataset-section" id="dataset-ssb">
+      <div class="dataset-heading">
+        <h2>SSB</h2>
+        <span>ssb · latest HarborSQL v0.1.3</span>
+      </div>
+      <p class="dataset-description">Star Schema Benchmark analytical workload at scale factor 10. The runner executes the 13 generated SSB queries over S3-backed Delta tables and reports aggregate query timings.</p>
+      <div class="table-wrap dataset-table-wrap">
+        <table><thead><tr><th>Comparison</th><th>Instance size</th><th>Version</th><th>$/hr</th><th>Queries</th><th>Runs/query</th><th>Failed</th><th>Best total</th><th>Best cost</th><th>Median total</th><th>Median cost</th><th>Average total</th><th>Average cost</th><th>Result</th></tr></thead><tbody><tr><td><span class="comparison-badge databricks">Databricks</span></td><td>2xs</td><td>v2026.10</td><td>$3.60</td><td>13</td><td>3</td><td>0</td><td>30.681s</td><td>$0.0307</td><td>53.181s</td><td>$0.0532</td><td>74.424s</td><td>$0.0744</td><td><a href="../results/databricks-sql-warehouse/2xs/v2026.10/ssb/databricks-2xs-aws-ec2-t3.small-ssb-sf10-20260510T152631Z.json">results/databricks-sql-warehouse/2xs/v2026.10/ssb/databricks-2xs-aws-ec2-t3.small-ssb-sf10-20260510T152631Z.json</a></td></tr>
+<tr><td><span class="comparison-badge latest">Latest</span></td><td>i3.2xlarge</td><td>v0.1.3</td><td>$0.7240</td><td>13</td><td>3</td><td>0</td><td>51.832s</td><td>$0.0104</td><td>53.884s</td><td>$0.0108</td><td>54.416s</td><td>$0.0109</td><td><a href="../results/harborsql/i3.2xlarge/v0.1.3/ssb/ssb-sf10.json">results/harborsql/i3.2xlarge/v0.1.3/ssb/ssb-sf10.json</a></td></tr>
+<tr class="selected-data-row" data-selected-version="v0.1.0-rc.5" hidden><td><span class="comparison-badge selected">Selected</span></td><td>i3.2xlarge</td><td>v0.1.0-rc.5</td><td>$0.7240</td><td>13</td><td>3</td><td>0</td><td>49.792s</td><td>$0.0100</td><td>50.485s</td><td>$0.0102</td><td>51.595s</td><td>$0.0104</td><td><a href="../results/harborsql/i3.2xlarge/v0.1.0-rc.5/ssb/harborsql-i3.2xlarge-v0.1.0-rc.5-sf10-client-20260428T164659Z.json">results/harborsql/i3.2xlarge/v0.1.0-rc.5/ssb/harborsql-i3.2xlarge-v0.1.0-rc.5-sf10-client-20260428T164659Z.json</a></td></tr>
+<tr class="selected-data-row" data-selected-version="v0.1.0" hidden><td><span class="comparison-badge selected">Selected</span></td><td>i3.2xlarge</td><td>v0.1.0</td><td>$0.7240</td><td>13</td><td>3</td><td>0</td><td>63.903s</td><td>$0.0129</td><td>66.128s</td><td>$0.0133</td><td>65.788s</td><td>$0.0132</td><td><a href="../results/harborsql/i3.2xlarge/v0.1.0/ssb/ssb-sf10.json">results/harborsql/i3.2xlarge/v0.1.0/ssb/ssb-sf10.json</a></td></tr>
+<tr class="selected-data-row" data-selected-version="v0.1.2-rc.1" hidden><td><span class="comparison-badge selected">Selected</span></td><td>i3.2xlarge</td><td>v0.1.2-rc.1</td><td>$0.7240</td><td>13</td><td>3</td><td>0</td><td>54.461s</td><td>$0.0110</td><td>57.024s</td><td>$0.0115</td><td>57.509s</td><td>$0.0116</td><td><a href="../results/harborsql/i3.2xlarge/v0.1.2-rc.1/ssb/ssb-sf10.json">results/harborsql/i3.2xlarge/v0.1.2-rc.1/ssb/ssb-sf10.json</a></td></tr>
+<tr class="selected-data-row" data-selected-version="v0.1.2" hidden><td><span class="comparison-badge selected">Selected</span></td><td>i3.2xlarge</td><td>v0.1.2</td><td>$0.7240</td><td>13</td><td>3</td><td>0</td><td>40.015s</td><td>$0.00805</td><td>40.623s</td><td>$0.00817</td><td>41.504s</td><td>$0.00835</td><td><a href="../results/harborsql/i3.2xlarge/v0.1.2/ssb/ssb-sf10.json">results/harborsql/i3.2xlarge/v0.1.2/ssb/ssb-sf10.json</a></td></tr>
+<tr class="selected-data-row" data-selected-version="v0.1.3"><td><span class="comparison-badge selected">Selected</span></td><td>i3.2xlarge</td><td>v0.1.3</td><td>$0.7240</td><td>13</td><td>3</td><td>0</td><td>51.832s</td><td>$0.0104</td><td>53.884s</td><td>$0.0108</td><td>54.416s</td><td>$0.0109</td><td><a href="../results/harborsql/i3.2xlarge/v0.1.3/ssb/ssb-sf10.json">results/harborsql/i3.2xlarge/v0.1.3/ssb/ssb-sf10.json</a></td></tr>
+<tr hidden class="placeholder-row selected-empty-row"><td><span class="comparison-badge selected">Selected</span></td><td></td><td><span class="selected-version-label">v0.1.3</span></td><td><span class="empty">No HarborSQL results for the selected version.</span></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr></tbody></table>
+      </div>
+      <details class="detail-panel">
+        <summary>Per-query detail</summary>
+        <div class="table-wrap detail-table-wrap">
+          <table class="query-matrix-table"><thead><tr><th>Query</th><th>Databricks / 2xs</th><th>Latest HarborSQL / i3.2xlarge</th><th>Selected HarborSQL / i3.2xlarge</th></tr></thead><tbody><tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q1.1</span><span class="query-summary">SELECT SUM(lo_extendedprice * lo_discount) AS revenue FROM lineorder, date WHERE lo_orderdate = d_datekey AND d_year...</span></div></td><td><span class="perf-time-value" data-seconds="1.329000">1.329s</span></td><td><span class="perf-time-value" data-seconds="2.367000">2.367s</span></td><td><span data-seconds="2.236000" data-selected-version="v0.1.0-rc.5" hidden class="perf-time-value selected-cell-value">2.236s</span><span data-seconds="2.927000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">2.927s</span><span data-seconds="2.406000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">2.406s</span><span data-seconds="1.656000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">1.656s</span><span data-seconds="2.367000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">2.367s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q1.2</span><span class="query-summary">SELECT SUM(lo_extendedprice * lo_discount) AS revenue FROM lineorder, date WHERE lo_orderdate = d_datekey AND d_yearm...</span></div></td><td><span class="perf-time-value" data-seconds="1.180000">1.180s</span></td><td><span class="perf-time-value" data-seconds="2.552000">2.552s</span></td><td><span data-seconds="2.319000" data-selected-version="v0.1.0-rc.5" hidden class="perf-time-value selected-cell-value">2.319s</span><span data-seconds="3.064000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">3.064s</span><span data-seconds="2.636000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">2.636s</span><span data-seconds="1.802000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">1.802s</span><span data-seconds="2.552000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">2.552s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q1.3</span><span class="query-summary">SELECT SUM(lo_extendedprice * lo_discount) AS revenue FROM lineorder, date WHERE lo_orderdate = d_datekey AND d_weekn...</span></div></td><td><span class="perf-time-value" data-seconds="1.335000">1.335s</span></td><td><span class="perf-time-value" data-seconds="2.543000">2.543s</span></td><td><span data-seconds="2.335000" data-selected-version="v0.1.0-rc.5" hidden class="perf-time-value selected-cell-value">2.335s</span><span data-seconds="3.132000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">3.132s</span><span data-seconds="2.613000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">2.613s</span><span data-seconds="1.825000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">1.825s</span><span data-seconds="2.543000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">2.543s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q2.1</span><span class="query-summary">SELECT SUM(lo_revenue), d_year, p_brand FROM lineorder, date, part, supplier WHERE lo_orderdate = d_datekey AND lo_pa...</span></div></td><td><span class="perf-time-value" data-seconds="5.194000">5.194s</span></td><td><span class="perf-time-value" data-seconds="4.512000">4.512s</span></td><td><span data-seconds="4.160000" data-selected-version="v0.1.0-rc.5" hidden class="perf-time-value selected-cell-value">4.160s</span><span data-seconds="5.510000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">5.510s</span><span data-seconds="4.734000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">4.734s</span><span data-seconds="3.371000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">3.371s</span><span data-seconds="4.512000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">4.512s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q2.2</span><span class="query-summary">SELECT SUM(lo_revenue), d_year, p_brand FROM lineorder, date, part, supplier WHERE lo_orderdate = d_datekey AND lo_pa...</span></div></td><td><span class="perf-time-value" data-seconds="1.621000">1.621s</span></td><td><span class="perf-time-value" data-seconds="4.179000">4.179s</span></td><td><span data-seconds="3.924000" data-selected-version="v0.1.0-rc.5" hidden class="perf-time-value selected-cell-value">3.924s</span><span data-seconds="5.167000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">5.167s</span><span data-seconds="4.380000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">4.380s</span><span data-seconds="3.081000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">3.081s</span><span data-seconds="4.179000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">4.179s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q2.3</span><span class="query-summary">SELECT SUM(lo_revenue), d_year, p_brand FROM lineorder, date, part, supplier WHERE lo_orderdate = d_datekey AND lo_pa...</span></div></td><td><span class="perf-time-value" data-seconds="1.626000">1.626s</span></td><td><span class="perf-time-value" data-seconds="4.087000">4.087s</span></td><td><span data-seconds="3.772000" data-selected-version="v0.1.0-rc.5" hidden class="perf-time-value selected-cell-value">3.772s</span><span data-seconds="5.065000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">5.065s</span><span data-seconds="4.318000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">4.318s</span><span data-seconds="2.989000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">2.989s</span><span data-seconds="4.087000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">4.087s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q3.1</span><span class="query-summary">SELECT c_nation, s_nation, d_year, SUM(lo_revenue) AS revenue FROM customer, lineorder, supplier, date WHERE lo_custk...</span></div></td><td><span class="perf-time-value" data-seconds="2.722000">2.722s</span></td><td><span class="perf-time-value" data-seconds="2.565000">2.565s</span></td><td><span data-seconds="2.594000" data-selected-version="v0.1.0-rc.5" hidden class="perf-time-value selected-cell-value">2.594s</span><span data-seconds="3.493000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">3.493s</span><span data-seconds="2.738000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">2.738s</span><span data-seconds="1.802000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">1.802s</span><span data-seconds="2.565000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">2.565s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q3.2</span><span class="query-summary">SELECT c_city, s_city, d_year, SUM(lo_revenue) AS revenue FROM customer, lineorder, supplier, date WHERE lo_custkey =...</span></div></td><td><span class="perf-time-value" data-seconds="2.290000">2.290s</span></td><td><span class="perf-time-value" data-seconds="1.909000">1.909s</span></td><td><span data-seconds="2.143000" data-selected-version="v0.1.0-rc.5" hidden class="perf-time-value selected-cell-value">2.143s</span><span data-seconds="2.894000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">2.894s</span><span data-seconds="2.054000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">2.054s</span><span data-seconds="1.367000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">1.367s</span><span data-seconds="1.909000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">1.909s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q3.3</span><span class="query-summary">SELECT c_city, s_city, d_year, SUM(lo_revenue) AS revenue FROM customer, lineorder, supplier, date WHERE lo_custkey =...</span></div></td><td><span class="perf-time-value" data-seconds="1.336000">1.336s</span></td><td><span class="perf-time-value" data-seconds="1.693000">1.693s</span></td><td><span data-seconds="2.082000" data-selected-version="v0.1.0-rc.5" hidden class="perf-time-value selected-cell-value">2.082s</span><span data-seconds="2.563000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">2.563s</span><span data-seconds="1.820000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">1.820s</span><span data-seconds="1.247000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">1.247s</span><span data-seconds="1.693000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">1.693s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q3.4</span><span class="query-summary">SELECT c_city, s_city, d_year, SUM(lo_revenue) AS revenue FROM customer, lineorder, supplier, date WHERE lo_custkey =...</span></div></td><td><span class="perf-time-value" data-seconds="2.316000">2.316s</span></td><td><span class="perf-time-value" data-seconds="1.102000">1.102s</span></td><td><span data-seconds="1.722000" data-selected-version="v0.1.0-rc.5" hidden class="perf-time-value selected-cell-value">1.722s</span><span data-seconds="1.909000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">1.909s</span><span data-seconds="1.167000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">1.167s</span><span data-seconds="0.868000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">0.868s</span><span data-seconds="1.102000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">1.102s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q4.1</span><span class="query-summary">SELECT d_year, c_nation, SUM(lo_revenue - lo_supplycost) AS profit FROM date, customer, supplier, part, lineorder WHE...</span></div></td><td><span class="perf-time-value" data-seconds="4.520000">4.520s</span></td><td><span class="perf-time-value" data-seconds="17.153000">17.153s</span></td><td><span data-seconds="14.794000" data-selected-version="v0.1.0-rc.5" hidden class="perf-time-value selected-cell-value">14.794s</span><span data-seconds="18.451000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">18.451s</span><span data-seconds="17.869000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">17.869s</span><span data-seconds="14.373000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">14.373s</span><span data-seconds="17.153000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">17.153s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q4.2</span><span class="query-summary">SELECT d_year, s_nation, p_category, SUM(lo_revenue - lo_supplycost) AS profit FROM date, customer, supplier, part, l...</span></div></td><td><span class="perf-time-value" data-seconds="2.455000">2.455s</span></td><td><span class="perf-time-value" data-seconds="3.597000">3.597s</span></td><td><span data-seconds="3.921000" data-selected-version="v0.1.0-rc.5" hidden class="perf-time-value selected-cell-value">3.921s</span><span data-seconds="5.005000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">5.005s</span><span data-seconds="3.917000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">3.917s</span><span data-seconds="2.864000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">2.864s</span><span data-seconds="3.597000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">3.597s</span></td></tr>
+<tr class="query-matrix-row"><td><div class="query-cell"><span class="query-label">Q4.3</span><span class="query-summary">SELECT d_year, s_city, p_brand, SUM(lo_revenue - lo_supplycost) AS profit FROM date, customer, supplier, part, lineor...</span></div></td><td><span class="perf-time-value" data-seconds="2.757000">2.757s</span></td><td><span class="perf-time-value" data-seconds="3.573000">3.573s</span></td><td><span data-seconds="3.790000" data-selected-version="v0.1.0-rc.5" hidden class="perf-time-value selected-cell-value">3.790s</span><span data-seconds="4.723000" data-selected-version="v0.1.0" hidden class="perf-time-value selected-cell-value">4.723s</span><span data-seconds="3.809000" data-selected-version="v0.1.2-rc.1" hidden class="perf-time-value selected-cell-value">3.809s</span><span data-seconds="2.770000" data-selected-version="v0.1.2" hidden class="perf-time-value selected-cell-value">2.770s</span><span data-seconds="3.573000" data-selected-version="v0.1.3" class="perf-time-value selected-cell-value">3.573s</span></td></tr></tbody></table>
+        </div>
+      </details>
+    </section>
+
+    <footer>Generated at 2026-05-12T22:03:15+00:00 from benchmark JSON files.</footer>
+  </main>
+  <script>
+    (() => {
+      const select = document.getElementById("harborsql-version-select");
+      if (!select) return;
+
+      function updatePerformanceHighlights() {
+        document.querySelectorAll(".query-matrix-table td").forEach((cell) => {
+          cell.classList.remove("perf-best", "perf-worst");
+        });
+
+        document.querySelectorAll(".query-matrix-row").forEach((row) => {
+          const values = Array.from(row.querySelectorAll(".perf-time-value"))
+            .filter((value) => !value.hidden)
+            .map((value) => ({
+              value,
+              seconds: Number(value.dataset.seconds),
+            }))
+            .filter((entry) => Number.isFinite(entry.seconds));
+
+          if (values.length < 2) return;
+
+          const seconds = values.map((entry) => entry.seconds);
+          const best = Math.min(...seconds);
+          const worst = Math.max(...seconds);
+          if (best === worst) return;
+
+          values.forEach((entry) => {
+            const cell = entry.value.closest("td");
+            if (!cell) return;
+            if (entry.seconds === best) cell.classList.add("perf-best");
+            if (entry.seconds === worst) cell.classList.add("perf-worst");
+          });
+        });
+      }
+
+      function updateSelectedVersion() {
+        const version = select.value;
+        document.querySelectorAll(".selected-version-label").forEach((label) => {
+          label.textContent = version || "none";
+        });
+        document.querySelectorAll(".selected-cell-value").forEach((value) => {
+          value.hidden = value.dataset.selectedVersion !== version;
+        });
+        document.querySelectorAll(".dataset-section table").forEach((table) => {
+          let visibleRows = 0;
+          table.querySelectorAll(".selected-data-row").forEach((row) => {
+            const visible = row.dataset.selectedVersion === version;
+            row.hidden = !visible;
+            if (visible) visibleRows += 1;
+          });
+          const emptyRow = table.querySelector(".selected-empty-row");
+          if (emptyRow) emptyRow.hidden = visibleRows !== 0;
+        });
+        updatePerformanceHighlights();
+      }
+
+      select.addEventListener("change", updateSelectedVersion);
+      updateSelectedVersion();
+    })();
+  </script>
+</body>
+</html>
