@@ -9,6 +9,7 @@ const sidebars: SidebarsConfig = {
     'configuration',
     'advanced-usage',
     'result-types',
+    'delta-types-compatibility',
     'sql-compatibility',
   ],
 };

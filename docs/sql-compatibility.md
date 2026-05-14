@@ -8,6 +8,29 @@ HarborSQL executes SQL with Apache DataFusion. Most scalar SQL functions follow
 DataFusion behavior, which can differ from Databricks SQL Warehouse for edge
 cases. This page records known differences and recommended workarounds.
 
+## HarborSQL Compatibility Rewrites
+
+HarborSQL applies a small set of compatibility rewrites before handing SQL to
+DataFusion. These rewrites keep common Databricks SQL connector and benchmark
+queries working while leaving general SQL semantics to DataFusion.
+
+- Unaliased `COUNT(*)` projections are aliased as `count(1)` by default.
+- Unaliased expression projections are assigned Databricks-style metadata names
+  by default.
+- Simple contains-style `LIKE '%literal%'` predicates can be rewritten to
+  DataFusion `contains(...)`.
+- Single-capture `REGEXP_REPLACE(..., '$1')` shapes can be rewritten to a
+  HarborSQL UDF.
+- `extract(minute FROM timestamp)` is rewritten to a HarborSQL UDF for
+  Databricks-compatible minute extraction.
+- Databricks `get(array, zero_based_index)` is rewritten to DataFusion
+  `array_element(...)` with one-based index adjustment and negative-index
+  null behavior. `get(...).field` is rewritten to DataFusion named-field
+  bracket access.
+
+See [Delta Types Compatibility](./delta-types-compatibility.md) for the
+decimal, binary, nested-result, and `get(array, index)` compatibility notes.
+
 ## `REGEXP_REPLACE` and Embedded Line Breaks
 
 A ClickBench Q29 validation mismatch isolated a difference in this expression:
