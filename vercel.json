@@ -1,4 +1,28 @@
 {
   "buildCommand": "npm run build",
-  "outputDirectory": "build"
+  "outputDirectory": "build",
+  "redirects": [
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "harborsql.com"
+        }
+      ],
+      "destination": "https://docs.harborsql.com/",
+      "permanent": false
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "harborsql.com"
+        }
+      ],
+      "destination": "https://docs.harborsql.com/:path*",
+      "permanent": false
+    }
+  ]
 }
