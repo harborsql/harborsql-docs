@@ -17,7 +17,7 @@ returns Databricks-compatible result sets.
 - Read-only `SELECT` queries
 - Unity Catalog Delta table discovery and authorization
 - AWS S3-backed temporary table credentials vended by Unity Catalog
-- Databricks SQL connector compatibility for a focused Thrift-over-HTTP surface
+- Databricks SQL connector and JDBC driver compatibility for a focused Thrift-over-HTTP surface
 - DataFusion query execution with Delta Lake table providers
 - Bounded in-memory result materialization
 - Structured tracing, request IDs, and Prometheus metrics
@@ -33,6 +33,7 @@ runtime.
 ## Start Here
 
 - [Getting Started](./getting-started) covers the main migration path.
+- [Databricks JDBC Driver](./databricks-jdbc) covers Java/JDBC clients, driver versions, and auth options.
 - [Advanced Usage](./advanced-usage) covers one-off query mode.
 - [How It Works](./how-it-works) explains the request path through Unity Catalog and Delta.
 - [Configuration](./configuration) lists environment variables and defaults.

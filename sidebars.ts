@@ -4,6 +4,7 @@ const sidebars: SidebarsConfig = {
   docsSidebar: [
     'intro',
     'getting-started',
+    'databricks-jdbc',
     'docker',
     'how-it-works',
     'configuration',
