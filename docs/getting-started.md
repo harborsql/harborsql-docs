@@ -66,6 +66,9 @@ use HTTPS for real Databricks workspaces.
 HarborSQL targets a focused Databricks SQL connector-compatible
 Thrift-over-HTTP surface.
 
+For Java tools and applications, see [Databricks JDBC Driver](./databricks-jdbc)
+for supported driver versions, required JDBC properties, and auth options.
+
 ### HarborSQL Behind HTTPS
 
 When HarborSQL is exposed through HTTPS, for example behind a TLS-terminating
