@@ -12,6 +12,7 @@ const sidebars: SidebarsConfig = {
     'result-types',
     'delta-types-compatibility',
     'sql-compatibility',
+    'show-statements',
   ],
 };
 
