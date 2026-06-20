@@ -13,6 +13,7 @@ const sidebars: SidebarsConfig = {
     'delta-types-compatibility',
     'sql-compatibility',
     'show-statements',
+    'system-metadata',
   ],
 };
 
