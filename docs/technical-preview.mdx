@@ -1,0 +1,120 @@
+---
+title: Technical Preview
+sidebar_label: Technical Preview
+---
+
+# HarborSQL Technical Preview
+
+HarborSQL is an external, read-only SQL engine for Unity Catalog Delta tables.
+It accepts Databricks SQL client requests, forwards the caller's Databricks
+token to Unity Catalog, receives short-lived table credentials, reads Delta data
+with `delta-rs`, executes SQL with DataFusion, and returns Databricks-compatible
+result sets.
+
+The preview is intended for Databricks teams that already use Unity Catalog and
+want to evaluate external query compute without replacing their catalog,
+authorization model, or existing SQL client shape.
+
+> **Pre-1.0:** HarborSQL is pre-1.0 software. The compatibility surface is
+> intentionally focused and still growing. Use this preview to test specific
+> read-only workloads, connector behavior, and operational assumptions before
+> relying on it for production traffic.
+
+## What To Evaluate
+
+HarborSQL is a fit to evaluate when you have:
+
+- Unity Catalog Delta tables backed by cloud object storage.
+- Existing Databricks users or service principals with read access to those
+  tables.
+- Read-heavy SQL workloads where external, self-managed compute is worth
+  testing.
+- Python, JDBC, or other Databricks SQL connector-shaped clients that can be
+  pointed at a HarborSQL endpoint.
+
+It is not trying to replace Databricks SQL Warehouse for every workload. The
+preview is specifically about validating whether a focused external engine can
+serve governed, read-only query paths well enough for your use case.
+
+## Runtime Shape
+
+```text
+Databricks SQL client or JDBC driver
+  -> HarborSQL
+  -> Unity Catalog metadata and credential vending
+  -> Delta table data in object storage
+  -> DataFusion query execution
+  -> Databricks-compatible result metadata and rows
+```
+
+Authorization remains anchored in Unity Catalog. HarborSQL does not persist
+Databricks bearer tokens or temporary cloud credentials. Temporary table
+credentials are cached only through token-scoped, expiring table entries.
+
+See [How It Works](./how-it-works) for the request path and
+[Configuration](./configuration#unity-catalog-permissions) for the required
+Unity Catalog grants.
+
+## Supported Today
+
+- Read-only `SELECT` queries.
+- Unity Catalog table discovery and authorization.
+- AWS S3-backed temporary table credentials vended by Unity Catalog.
+- Databricks SQL connector-compatible Thrift-over-HTTP request handling.
+- Databricks JDBC driver compatibility for the documented driver lines.
+- Databricks-style result metadata and inline result encoding for supported
+  Arrow result types.
+- DataFusion query execution over Delta Lake table providers.
+- Bounded in-memory result materialization.
+- Structured tracing, request IDs, stable client-facing error codes, and
+  Prometheus metrics.
+
+Start with [Getting Started](./getting-started), [Docker](./docker), and
+[Databricks JDBC Driver](./databricks-jdbc) when wiring a local or hosted
+preview endpoint.
+
+## Current Limits
+
+- HarborSQL is read-only.
+- The Databricks SQL protocol surface is focused rather than complete.
+- Cloud Fetch and durable or streaming result storage are not part of the
+  default runtime.
+- Result pages are materialized in bounded memory.
+- SQL behavior follows DataFusion unless HarborSQL documents a specific
+  Databricks compatibility rewrite.
+- Connector compatibility should be tested against the exact client versions
+  and auth flows used by your workload.
+
+See [SQL Compatibility Notes](./sql-compatibility), [Result Type Support](./result-types),
+and [Delta Types Compatibility](./delta-types-compatibility) for the current
+compatibility details.
+
+## Evidence To Review
+
+The public benchmark dashboard records HarborSQL runs across ClickBench, SSB,
+Delta type compatibility fixtures, and point-lookup concurrency scenarios.
+Treat these numbers as preview evidence for the tested datasets and topologies,
+not as a universal performance claim.
+
+- [Benchmark dashboard](/benchmarks)
+- [Docker image](https://github.com/orgs/harborsql/packages/container/package/harborsql)
+- [GitHub releases](https://github.com/harborsql/harborsql/releases)
+- [Source repository](https://github.com/harborsql/harborsql)
+
+## Feedback Requested
+
+The most useful preview feedback is concrete:
+
+- Which Databricks SQL connector, JDBC driver, BI tool, or application client
+  you tried.
+- Which authentication flow you used.
+- Which Unity Catalog table shapes and Delta result types were involved.
+- Whether the result values matched your Databricks SQL Warehouse baseline.
+- Which SQL syntax, metadata call, result type, or operational feature blocked
+  the evaluation.
+- Whether the cost, latency, deployment, or security model would make the
+  project useful for a real read-only workload.
+
+Open a GitHub issue with non-sensitive details, or open a short issue asking
+for a private channel before sharing workspace hostnames, object paths, tokens,
+temporary credentials, logs, or query text.

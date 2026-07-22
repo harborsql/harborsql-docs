@@ -23,15 +23,15 @@ returns Databricks-compatible result sets.
 - Structured tracing, request IDs, and Prometheus metrics
 - Stable client-facing error codes with centrally redacted internal logs
 
-:::caution Pre-1.0
-HarborSQL is pre-1.0 software. The compatibility surface is intentionally
-defined and still growing. Cloud Fetch, durable or streaming result storage,
-and broader Databricks SQL protocol coverage are not yet part of the default
-runtime.
-:::
+> **Pre-1.0:** HarborSQL is pre-1.0 software. The compatibility surface is
+> intentionally defined and still growing. Cloud Fetch, durable or streaming
+> result storage, and broader Databricks SQL protocol coverage are not yet part
+> of the default runtime.
 
 ## Start Here
 
+- [Technical Preview](./technical-preview) explains who should evaluate HarborSQL, what works today, and where the current limits are.
+- [Databricks SQL Warehouse Alternative](./databricks-sql-warehouse-alternative) compares HarborSQL with managed warehouse compute and identifies the workloads that fit.
 - [Getting Started](./getting-started) covers the main migration path.
 - [Databricks JDBC Driver](./databricks-jdbc) covers Java/JDBC clients, driver versions, and auth options.
 - [Advanced Usage](./advanced-usage) covers one-off query mode.
