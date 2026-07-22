@@ -95,6 +95,8 @@ with connection.cursor() as cursor:
 HarborSQL also supports a documented subset of the Databricks JDBC driver
 surface. Review [Getting Started](./getting-started) and
 [Databricks JDBC Driver](./databricks-jdbc) before testing a client or BI tool.
+For the implementation details, read
+[Building a Databricks SQL-compatible server with Rust and DataFusion](./articles/building-databricks-sql-compatible-server).
 
 ## Control the Query Compute
 
@@ -134,8 +136,7 @@ It is not currently a fit when you require:
 
 HarborSQL is pre-1.0 software. Validate the precise SQL, result types, driver
 versions, authentication flows, and concurrency patterns used by your workload.
-The [Technical Preview](./technical-preview),
-[SQL Compatibility Notes](./sql-compatibility), and
+[SQL Compatibility Notes](./sql-compatibility) and
 [Result Types](./result-types) define the current surface.
 
 ## Evaluate HarborSQL

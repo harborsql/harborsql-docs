@@ -3,7 +3,6 @@ import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 const sidebars: SidebarsConfig = {
   docsSidebar: [
     'intro',
-    'technical-preview',
     'databricks-sql-warehouse-alternative',
     {
       type: 'category',
@@ -13,7 +12,10 @@ const sidebars: SidebarsConfig = {
         title: 'Articles',
         description: 'Long-form notes about HarborSQL design, benchmarks, and trade-offs.',
       },
-      items: ['articles/why-i-built-harborsql'],
+      items: [
+        'articles/why-i-built-harborsql',
+        'articles/building-databricks-sql-compatible-server',
+      ],
     },
     'getting-started',
     'databricks-jdbc',
