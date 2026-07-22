@@ -3,6 +3,8 @@ import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 const sidebars: SidebarsConfig = {
   docsSidebar: [
     'intro',
+    'technical-preview',
+    'databricks-sql-warehouse-alternative',
     {
       type: 'category',
       label: 'Articles',
