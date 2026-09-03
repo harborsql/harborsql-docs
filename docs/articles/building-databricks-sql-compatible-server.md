@@ -1,6 +1,15 @@
 ---
-title: Building a Databricks SQL-compatible server with Rust and DataFusion
-description: How HarborSQL implements the Databricks SQL protocol while using Unity Catalog, delta-rs, and DataFusion for query execution.
+title: Databricks SQL Server with Rust and DataFusion
+description: Build a Databricks SQL-compatible server in Rust using Thrift over HTTP, Unity Catalog, delta-rs, Apache Arrow, and DataFusion.
+slug: /articles/building-databricks-sql-compatible-server
+sidebar_label: Building a SQL-compatible server
+keywords:
+  - databricks sql protocol
+  - databricks sql server
+  - thrift over http
+  - rust sql server
+  - datafusion sql server
+  - unity catalog datafusion
 ---
 
 # Building a Databricks SQL-compatible server with Rust and DataFusion
@@ -10,6 +19,28 @@ Running SQL is the easy part of building a SQL server. Convincing an existing cl
 The Databricks SQL Connector does not send a SQL string and wait for a JSON response. It opens a session, submits a statement, polls an operation, asks for result metadata, fetches rows, and eventually closes the operation. JDBC drivers add their own metadata calls and setup queries around that flow.
 
 HarborSQL implements enough of this protocol to let supported Databricks clients query Unity Catalog Delta tables through DataFusion. The goal is simple: keep the client, the identity, and the catalog, but replace the query compute.
+
+This article walks through the complete request path: Thrift RPCs, session and
+operation state, Unity Catalog authorization, lazy Delta table loading,
+DataFusion execution, and Databricks-shaped Arrow results. If you are deciding
+whether to run this architecture, start with the
+[Databricks SQL Warehouse alternative comparison](../databricks-sql-warehouse-alternative).
+
+## Architecture at a glance
+
+| Layer | HarborSQL responsibility |
+| --- | --- |
+| Client protocol | Decode and encode Databricks Thrift-over-HTTP RPCs |
+| Stateful execution | Track sessions, asynchronous operations, cancellation, and result paging |
+| Authorization | Forward the caller's identity to Unity Catalog |
+| Table access | Request temporary credentials and open Delta tables with `delta-rs` |
+| Query engine | Plan and execute SQL with DataFusion |
+| Results | Convert Arrow arrays into Databricks-compatible metadata and Thrift columns |
+
+The protocol layer is only the front door. A compatible server must preserve
+state between calls, enforce the caller's permissions, bridge remote catalog
+objects into the query engine, and return the exact metadata expected by real
+drivers.
 
 ## What the client actually sends
 
@@ -140,5 +171,33 @@ There is still compatibility work to do. Every new BI tool or driver version can
 But the narrow version is already useful. If your workload is a set of interactive reads over Unity Catalog Delta tables, the query does not need distributed compute, and your client uses the supported protocol surface, you can move the compute without rebuilding the application or duplicating the catalog.
 
 That is the line HarborSQL is trying to hold: compatible where compatibility has been tested, explicit everywhere else.
+
+## Frequently asked questions
+
+### What protocol does the Databricks SQL Connector use?
+
+The Databricks SQL Connector uses Thrift RPCs over HTTP. A query spans several
+calls, including session creation, statement execution, status polling, metadata
+retrieval, result fetching, and operation cleanup.
+
+### Can DataFusion query Unity Catalog Delta tables directly?
+
+Not by itself. HarborSQL bridges Unity Catalog and DataFusion by resolving the
+requested table, vending temporary credentials, opening the table with
+`delta-rs`, registering its object store and table provider, and then handing
+the query to DataFusion.
+
+### Can an existing Databricks SQL client use a custom server?
+
+Yes, if the server implements the RPCs, operation states, authentication
+behavior, result metadata, and types that the client uses. HarborSQL tests this
+focused compatibility surface against supported Python connector and JDBC
+driver versions.
+
+### Why implement the server in Rust?
+
+Rust gives HarborSQL direct access to the Arrow, DataFusion, and `delta-rs`
+ecosystem. Tokio also provides the asynchronous task and cancellation primitives
+needed to model long-running SQL operations behind a polling protocol.
 
 You can review the [source code](https://github.com/harborsql/harborsql), follow the [Getting Started](../getting-started) guide, or inspect the current [SQL compatibility notes](../sql-compatibility) before trying one of your own queries.

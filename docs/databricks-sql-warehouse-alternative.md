@@ -27,6 +27,10 @@ HarborSQL is not a replacement for the full Databricks platform. It is an
 open-source Databricks SQL Warehouse alternative for interactive, read-only
 queries that fit on a single self-managed engine.
 
+**In short:** HarborSQL keeps Unity Catalog and the Databricks client protocol,
+but runs supported queries on infrastructure you control. The project is
+[available under the MIT license](https://github.com/harborsql/harborsql).
+
 ## HarborSQL vs. Databricks SQL Warehouse
 
 | Capability | HarborSQL | Databricks SQL Warehouse |
@@ -45,6 +49,17 @@ Choose HarborSQL when the narrower runtime matches the workload. Keep using a
 Databricks SQL Warehouse for queries that require distributed execution, the
 complete Databricks SQL surface, Cloud Fetch, durable result storage, or other
 managed warehouse features.
+
+### What HarborSQL replaces
+
+HarborSQL replaces the compute path for a supported read-only query. It accepts
+the request, resolves the referenced Unity Catalog tables, reads their Delta
+files from object storage, executes the plan with DataFusion, and returns the
+result through a Databricks-compatible protocol.
+
+It does not replace your Databricks workspace, Unity Catalog, identity provider,
+or storage. That boundary lets you evaluate another query runtime without
+copying table metadata or creating a parallel authorization system.
 
 ## Keep Unity Catalog Governance
 
@@ -157,3 +172,32 @@ Use [Getting Started](./getting-started) for the full setup, then run the same
 representative query against HarborSQL and your Databricks SQL Warehouse.
 Compare result values and metadata first, followed by latency, concurrency,
 resource use, and total operating cost.
+
+## Frequently Asked Questions
+
+### Can HarborSQL replace a Databricks SQL Warehouse?
+
+HarborSQL can replace the warehouse compute for supported, read-only queries
+over Unity Catalog Delta tables. It cannot replace managed features such as
+distributed execution, Cloud Fetch, durable result storage, writes, or the full
+Databricks SQL language and protocol surface.
+
+### Does HarborSQL work with Unity Catalog?
+
+Yes. HarborSQL uses the caller's Databricks identity to discover tables and
+request temporary table credentials from Unity Catalog. The caller retains the
+normal catalog, schema, and table permissions and also needs
+`EXTERNAL USE SCHEMA`.
+
+### Can existing Databricks SQL clients connect to HarborSQL?
+
+Supported versions of the Python `databricks-sql-connector` and Databricks JDBC
+driver can connect by using the HarborSQL hostname and HTTP path. HarborSQL
+implements a focused subset of the Thrift-over-HTTP protocol, so test the exact
+driver version and metadata calls used by your application or BI tool.
+
+### Is HarborSQL an open-source Databricks alternative?
+
+HarborSQL is an open-source alternative to Databricks SQL Warehouse compute for
+a narrow workload. It is not an open-source replacement for the complete
+Databricks platform.
