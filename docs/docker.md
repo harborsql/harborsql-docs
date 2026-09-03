@@ -1,5 +1,6 @@
 ---
 title: Docker
+description: Run HarborSQL from GitHub Container Registry with a pinned release, Unity Catalog settings, secure port mapping, and production TLS guidance.
 ---
 
 # Docker

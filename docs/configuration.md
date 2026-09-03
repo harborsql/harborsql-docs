@@ -1,5 +1,6 @@
 ---
 title: Configuration
+description: Configure HarborSQL for Unity Catalog permissions, cloud storage, sessions, operations, caching, result limits, logging, and server deployment.
 ---
 
 # Configuration

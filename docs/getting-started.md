@@ -1,5 +1,6 @@
 ---
 title: Getting Started
+description: Install HarborSQL, grant Unity Catalog access, run the Docker image, and connect a Databricks SQL Python or JDBC client to your first query.
 ---
 
 # Getting Started

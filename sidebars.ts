@@ -8,9 +8,8 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Articles',
       link: {
-        type: 'generated-index',
-        title: 'Articles',
-        description: 'Long-form notes about HarborSQL design, benchmarks, and trade-offs.',
+        type: 'doc',
+        id: 'articles/index',
       },
       items: [
         'articles/why-i-built-harborsql',

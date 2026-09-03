@@ -1,5 +1,6 @@
 ---
 title: Databricks JDBC Driver
+description: Connect supported Databricks JDBC 2.6 and 3.x clients to HarborSQL, with PAT, bearer-token, OAuth M2M, URL, and compatibility guidance.
 ---
 
 # Databricks JDBC Driver

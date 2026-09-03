@@ -63,11 +63,6 @@ const config: Config = {
         {to: '/category/articles', label: 'Articles', position: 'left'},
         {to: '/benchmarks', label: 'Benchmarks', position: 'left'},
         {
-          href: 'https://harborsql.com',
-          label: 'Website',
-          position: 'right',
-        },
-        {
           href: 'https://github.com/harborsql/harborsql',
           label: 'GitHub',
           position: 'right',
@@ -97,10 +92,6 @@ const config: Config = {
         {
           title: 'Project',
           items: [
-            {
-              label: 'Marketing Site',
-              href: 'https://harborsql.com',
-            },
             {
               label: 'Source Repository',
               href: 'https://github.com/harborsql/harborsql',

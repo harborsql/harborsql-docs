@@ -1,5 +1,6 @@
 ---
 title: How It Works
+description: Follow a HarborSQL query from Databricks client authentication through Unity Catalog, delta-rs, DataFusion execution, caching, and result delivery.
 ---
 
 # How It Works
