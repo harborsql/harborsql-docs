@@ -24,6 +24,11 @@ broader managed Databricks platform.
 
 ## Start with the product decision
 
+[Seven Databricks alternatives for SQL analytics](/articles/databricks-alternatives-sql-analytics)
+compares HarborSQL with Dremio, MotherDuck, ClickHouse, Trino, Snowflake, and
+BigQuery. It starts from the workload boundary instead of treating every option
+as a complete replacement for the Databricks platform.
+
 [Why I built HarborSQL](/articles/why-i-built-harborsql) explains the workload that
 motivated the project: interactive, read-only queries that keep Databricks
 identity and Unity Catalog governance but do not require distributed Spark
@@ -34,6 +39,10 @@ Use the [Databricks SQL Warehouse alternative](../databricks-sql-warehouse-alter
 guide for a capability-by-capability comparison. It identifies the workloads
 that fit HarborSQL and the managed warehouse features that HarborSQL does not
 try to reproduce.
+
+Use the [Databricks SQL Warehouse pricing guide](../databricks-sql-warehouse-pricing)
+to calculate DBU, infrastructure, runtime, and self-hosting costs without
+treating one benchmark assumption as a universal list price.
 
 ## Read the implementation deep dive
 

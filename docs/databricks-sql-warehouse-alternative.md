@@ -130,6 +130,12 @@ compatibility, and concurrency scenarios. Treat those results as evidence for
 the published datasets and topologies, not as a universal cost or performance
 guarantee. Benchmark your own queries before moving production traffic.
 
+The [Databricks SQL Warehouse pricing guide](./databricks-sql-warehouse-pricing)
+explains the DBU calculation, the benchmark's hourly assumptions, and the
+operational costs to include in a self-hosted comparison. For products that
+replace a broader part of the platform, see the
+[Databricks alternatives overview](./articles/databricks-alternatives-sql-analytics).
+
 ## Workloads That Fit HarborSQL
 
 HarborSQL is worth evaluating when you have:

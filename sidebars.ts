@@ -4,6 +4,7 @@ const sidebars: SidebarsConfig = {
   docsSidebar: [
     'intro',
     'databricks-sql-warehouse-alternative',
+    'databricks-sql-warehouse-pricing',
     {
       type: 'category',
       label: 'Articles',
@@ -12,6 +13,7 @@ const sidebars: SidebarsConfig = {
         id: 'articles/index',
       },
       items: [
+        'articles/databricks-alternatives-sql-analytics',
         'articles/why-i-built-harborsql',
         'articles/building-databricks-sql-compatible-server',
       ],
