@@ -5,7 +5,8 @@ slug: /
 
 # HarborSQL
 
-HarborSQL is an external SQL query engine for Unity Catalog Delta tables.
+HarborSQL is an MIT-licensed, self-hosted alternative to Databricks SQL Warehouse
+for supported read-only queries over Unity Catalog Delta tables.
 
 It accepts Databricks SQL connector-style requests, forwards the caller's
 Databricks bearer token to Unity Catalog, vends short-lived table credentials,
@@ -32,6 +33,7 @@ returns Databricks-compatible result sets.
 
 - [Databricks SQL Warehouse Alternative](./databricks-sql-warehouse-alternative) compares HarborSQL with managed warehouse compute and identifies the workloads that fit.
 - [Getting Started](./getting-started) covers the main migration path.
+- [SQL Warehouse Migration](./migrate-databricks-sql-warehouse) compares the same Unity Catalog table through both endpoints, including values and metadata.
 - [Databricks JDBC Driver](./databricks-jdbc) covers Java/JDBC clients, driver versions, and auth options.
 - [Advanced Usage](./advanced-usage) covers one-off query mode.
 - [How It Works](./how-it-works) explains the request path through Unity Catalog and Delta.

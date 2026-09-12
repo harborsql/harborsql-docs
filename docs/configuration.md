@@ -9,6 +9,10 @@ HarborSQL reads configuration from environment variables.
 
 ## Unity Catalog Permissions
 
+A metastore administrator must enable external data access before external
+engines can request table credentials. See the
+[Databricks external access setup](https://docs.databricks.com/aws/en/external-access/admin).
+
 HarborSQL is designed for teams that already have Unity Catalog Delta tables
 and existing Databricks principals that can read those tables.
 

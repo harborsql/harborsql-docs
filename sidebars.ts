@@ -19,6 +19,7 @@ const sidebars: SidebarsConfig = {
       ],
     },
     'getting-started',
+    'migrate-databricks-sql-warehouse',
     'databricks-jdbc',
     'docker',
     'how-it-works',

@@ -1,21 +1,23 @@
 ---
 title: Open Source Databricks SQL Warehouse Alternative
-description: Run read-only SQL on Unity Catalog Delta tables with HarborSQL, a self-hosted Databricks SQL Warehouse alternative powered by DataFusion.
+description: Replace supported Databricks SQL Warehouse reads with HarborSQL, an MIT-licensed engine that keeps Unity Catalog, Delta tables, and documented SQL clients.
 slug: /databricks-sql-warehouse-alternative
 sidebar_label: SQL Warehouse Alternative
 keywords:
   - databricks sql warehouse
   - databricks sql warehouse alternative
   - open source databricks alternative
+  - open source alternative to databricks sql warehouse
   - unity catalog sql engine
   - delta lake sql engine
 ---
 
 # An Open Source Alternative to Databricks SQL Warehouse
 
-HarborSQL is a self-hosted SQL engine for teams that want to query Unity
-Catalog Delta tables without routing every read-only workload through a
-Databricks SQL Warehouse.
+HarborSQL is an MIT-licensed, self-hosted alternative to Databricks SQL Warehouse
+for supported read-only queries over Unity Catalog Delta tables. It keeps the
+caller's Databricks identity, Unity Catalog table authorization, and existing
+Delta data, and accepts documented Databricks Python connector and JDBC paths.
 
 It keeps Unity Catalog for table discovery, authorization, and temporary
 credential vending. HarborSQL replaces the query compute for supported
@@ -27,9 +29,22 @@ HarborSQL is not a replacement for the full Databricks platform. It is an
 open-source Databricks SQL Warehouse alternative for interactive, read-only
 queries that fit on a single self-managed engine.
 
-**In short:** HarborSQL keeps Unity Catalog and the Databricks client protocol,
-but runs supported queries on infrastructure you control. The project is
-[available under the MIT license](https://github.com/harborsql/harborsql).
+Start with the [migration walkthrough](./migrate-databricks-sql-warehouse)
+to compare the same table through both endpoints. The
+[source and MIT license](https://github.com/harborsql/harborsql) are public.
+
+## Can I replace SQL Warehouse compute and keep Unity Catalog?
+
+Yes, for HarborSQL's supported read-only workloads. You don't need to migrate
+Delta tables to Iceberg or replace Unity Catalog with another metastore.
+HarborSQL requests table metadata and temporary credentials using the caller's
+Databricks token, then reads the underlying Delta files and executes the SQL.
+
+You still need a Databricks workspace and Unity Catalog. The documented storage
+path uses AWS S3 temporary credentials. This is not a standalone replacement
+for Databricks governance, and table credential access does not establish
+support for every governance feature, such as row filters or column masks.
+Validate the policies and table features your workload depends on before moving it.
 
 ## HarborSQL vs. Databricks SQL Warehouse
 
@@ -73,6 +88,8 @@ For each query, it:
 5. Executes the query with DataFusion.
 6. Returns Databricks-compatible result metadata and rows.
 
+An administrator must first enable external data access on the metastore, as
+described in [Databricks' external access setup](https://docs.databricks.com/aws/en/external-access/admin).
 The caller still needs the normal Unity Catalog permissions. HarborSQL also
 requires `EXTERNAL USE SCHEMA` on each schema it queries:
 
@@ -87,6 +104,21 @@ complete request and authorization model.
 
 ## Reuse Databricks SQL Clients
 
+Client compatibility is specific to the driver, authentication flow, and result
+path. JDBC support does not imply ODBC support or certification for every BI tool.
+
+| Client or capability | Documented evidence | What to validate |
+| --- | --- | --- |
+| Python `databricks-sql-connector` | Repository connector smoke tests; CI installs an unpinned connector | Record and pin the version you validate; test rows, metadata, and pagination |
+| Databricks JDBC legacy line | Smoke-tested version `2.6.40` | PAT or token pass-through; OAuth M2M has a hostname restriction |
+| Databricks JDBC 3.x | Smoke-tested version `3.3.3` | Required Thrift properties and Databricks OAuth endpoint configuration |
+| ODBC and JDBC 4.x | No documented compatibility claim here | Require separate evidence before selecting these paths |
+| BI applications | Driver support is only one dependency | Test schema discovery, generated SQL, parameters, and result types |
+
+The [connector smoke-test instructions](https://github.com/harborsql/harborsql/blob/main/docs/ci-smoke-tests.md)
+separate local protocol checks from opt-in tests against real Unity Catalog
+tables. A local protocol pass alone does not prove storage access works.
+
 For a supported Python client, the migration path keeps the existing
 `databricks-sql-connector` API and points `server_hostname` at HarborSQL:
 
@@ -98,6 +130,7 @@ connection = sql.connect(
     server_hostname="sql.example.com",
     http_path="/sql/1.0/warehouses/harborsql",
     access_token=os.environ["DATABRICKS_TOKEN"],
+    use_cloud_fetch=False,
     catalog="workspace",
     schema="analytics",
 )
@@ -135,6 +168,21 @@ explains the DBU calculation, the benchmark's hourly assumptions, and the
 operational costs to include in a self-hosted comparison. For products that
 replace a broader part of the platform, see the
 [Databricks alternatives overview](./articles/databricks-alternatives-sql-analytics).
+
+## HarborSQL or Trino for Unity Catalog Delta tables?
+
+Evaluate HarborSQL when your priority is retaining Databricks clients and the
+Unity Catalog credential path for read-only queries that fit a single engine.
+Evaluate Trino when you need distributed execution or federation across sources
+and can change client connections and configure the catalog and storage layer.
+
+Trino can query Delta Lake. Its
+[Delta Lake connector documentation](https://trino.io/docs/current/connector/delta-lake.html)
+describes the metastore, storage, and network configuration it needs. Reading
+the same table format is distinct from preserving the same client protocol and
+per-caller authorization path. Check the exact Trino connector and deployment
+you intend to use; don't assume either universal Unity Catalog incompatibility
+or automatic equivalence with Databricks SQL Warehouse.
 
 ## Workloads That Fit HarborSQL
 
@@ -174,7 +222,9 @@ docker run --rm \
   ghcr.io/harborsql/harborsql:$TAG
 ```
 
-Use [Getting Started](./getting-started) for the full setup, then run the same
+Use the [migration walkthrough](./migrate-databricks-sql-warehouse) for a
+repeatable comparison of values and result metadata, or
+[Getting Started](./getting-started) for the basic setup. Run the same
 representative query against HarborSQL and your Databricks SQL Warehouse.
 Compare result values and metadata first, followed by latency, concurrency,
 resource use, and total operating cost.

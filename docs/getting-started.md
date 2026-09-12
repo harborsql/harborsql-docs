@@ -5,6 +5,9 @@ description: Install HarborSQL, grant Unity Catalog access, run the Docker image
 
 # Getting Started
 
+To compare an existing workload before switching clients, follow the
+[SQL Warehouse migration walkthrough](./migrate-databricks-sql-warehouse).
+
 ## Requirements
 
 HarborSQL assumes you already have a working Databricks workspace with Unity
@@ -12,6 +15,9 @@ Catalog Delta tables and users or service principals that can read those
 tables.
 
 To migrate that workload to HarborSQL, you need:
+
+- External data access enabled on the Unity Catalog metastore by an administrator.
+  See [Databricks' setup instructions](https://docs.databricks.com/aws/en/external-access/admin).
 
 - A HarborSQL runtime:
   - Docker image: [`ghcr.io/harborsql/harborsql:<tag>`](https://github.com/orgs/harborsql/packages/container/package/harborsql)
