@@ -17,9 +17,43 @@ Warehouse and HarborSQL, compare the returned values and metadata, then move
 only the workloads that pass your checks.
 
 This walkthrough targets an existing Unity Catalog Delta table on AWS S3 and
-the Python Databricks SQL connector. It provides a runnable comparison, not a
-claim that your environment has already passed. For the product boundary, read
+the Python Databricks SQL connector. The aggregate comparison below has passed
+against a live Databricks workspace; repeat it for your own environment.
+For the product boundary, read
 the [open-source SQL Warehouse alternative guide](./databricks-sql-warehouse-alternative).
+
+## Verified live comparison
+
+On September 12, 2026, we ran the Python example below unchanged against an
+existing S3-backed ClickBench Delta table in Unity Catalog. HarborSQL and
+Databricks SQL Warehouse returned the same `COUNT(*)` value and identical
+column metadata, comparing every field in `cursor.description`.
+
+| Component | Validated configuration |
+| --- | --- |
+| HarborSQL | Published `v0.1.9` Docker image, `amd64`, running locally |
+| Python | `3.12.13` |
+| Databricks SQL connector | `4.5.0` |
+| Databricks SQL Warehouse | Serverless, 2X-Small |
+| Storage | Existing external Delta table on S3 in `eu-west-3` |
+| Client result path | Cloud Fetch disabled on both connections |
+| Outcome | Row count and all column-description fields matched |
+
+The image manifest digest was
+`sha256:1a4afb17c4bac554b085ba6c33783f16d1d9caf166ec01e720f9135096b06ccc`.
+The test reused the same caller identity and table for both connections, with
+no data copy or table changes. The script produced:
+
+```text
+Connector version: 4.5.0
+PASS: row count and column metadata match
+```
+
+This is evidence for the aggregate query and connection path below. It does
+not validate arbitrary row values, nested types, ODBC, BI applications,
+concurrency, or policy enforcement for a principal without access. The
+HarborSQL server ran locally while Databricks used serverless cloud compute;
+this run is not a performance comparison.
 
 ## 1. Choose a stable table and record versions
 
@@ -30,7 +64,8 @@ Use a table that the test principal already has permission to read.
 Record the HarborSQL release tag, connector version, warehouse configuration,
 table schema, and test time. Keep private identifiers in your own evaluation
 notes. The repository's Python smoke workflow installs an unpinned connector,
-so there is no fixed Python version certification to infer from that workflow.
+so do not infer a fixed Python version certification from that workflow.
+The live comparison recorded above used connector `4.5.0`.
 
 Use your application's existing connector environment and record its version:
 
@@ -38,12 +73,12 @@ Use your application's existing connector environment and record its version:
 python -m pip show databricks-sql-connector
 ```
 
-For a new environment, install the connector version you intend to evaluate:
+For a new environment, reproduce the validated connector version:
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install 'databricks-sql-connector==<version-to-evaluate>'
+python -m pip install 'databricks-sql-connector==4.5.0'
 ```
 
 The documented JDBC smoke versions are `2.6.40` and `3.3.3`. Java applications
@@ -181,8 +216,8 @@ that override and use the hostname and path described in
 
 The printed times cover execution and fetching after connection establishment.
 One sequential run is not a benchmark: cache state, startup, and network effects
-can dominate. The expected PASS line is a check you must obtain in your own
-environment, not a published measurement.
+can dominate. Obtain the PASS line in your own environment before migrating
+that query.
 
 ## 5. Expand the checks to your application
 

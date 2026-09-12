@@ -109,7 +109,7 @@ path. JDBC support does not imply ODBC support or certification for every BI too
 
 | Client or capability | Documented evidence | What to validate |
 | --- | --- | --- |
-| Python `databricks-sql-connector` | Repository connector smoke tests; CI installs an unpinned connector | Record and pin the version you validate; test rows, metadata, and pagination |
+| Python `databricks-sql-connector` | Live aggregate and metadata comparison passed with `4.5.0`; CI installs an unpinned connector | Record and pin the version you validate; test rows, metadata, and pagination |
 | Databricks JDBC legacy line | Smoke-tested version `2.6.40` | PAT or token pass-through; OAuth M2M has a hostname restriction |
 | Databricks JDBC 3.x | Smoke-tested version `3.3.3` | Required Thrift properties and Databricks OAuth endpoint configuration |
 | ODBC and JDBC 4.x | No documented compatibility claim here | Require separate evidence before selecting these paths |
@@ -118,6 +118,11 @@ path. JDBC support does not imply ODBC support or certification for every BI too
 The [connector smoke-test instructions](https://github.com/harborsql/harborsql/blob/main/docs/ci-smoke-tests.md)
 separate local protocol checks from opt-in tests against real Unity Catalog
 tables. A local protocol pass alone does not prove storage access works.
+
+The [verified migration example](./migrate-databricks-sql-warehouse#verified-live-comparison)
+records a live test with HarborSQL `v0.1.9`, connector `4.5.0`, and a serverless
+2X-Small warehouse. The same existing Unity Catalog Delta table returned matching
+row counts and column metadata through both endpoints.
 
 For a supported Python client, the migration path keeps the existing
 `databricks-sql-connector` API and points `server_hostname` at HarborSQL:
